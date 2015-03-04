@@ -1,4 +1,4 @@
-# Take of the blindfold
+# Take off the blindfold
 It's easier to understand what's happening if you can look at it.
 
 `rxvision` is a tool to visualize and debug your RxJS reactive streams.
