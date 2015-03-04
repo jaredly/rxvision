@@ -1,0 +1,31 @@
+{
+  "name": "rxvision",
+  "version": "0.1.0",
+  "description": "a visualizer/debugger for reactive streams",
+  "main": "index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaredly/rxvision.git"
+  },
+  "keywords": [
+    "rx",
+    "rxjs",
+    "reactive",
+    "debugger",
+    "visualizer",
+    "plugin"
+  ],
+  "author": "Jared Forsyth <jared@jaredforsyth.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jaredly/rxvision/issues"
+  },
+  "homepage": "https://github.com/jaredly/rxvision",
+  "devDependencies": {
+    "babelify": "^5.0.3",
+    "react": "^0.12.2"
+  }
+}
