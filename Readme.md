@@ -3,9 +3,9 @@ It's easier to understand what's happening if you can look at it.
 
 `rxvision` is a tool to visualize and debug your RxJS reactive streams.
 
-![screenshot](screenshot.png)
+[![screenshot](screenshot.png)](https://jaredly.github.io/rxvision)
 
-# The Demo
+# The Demo [(see it live)](https://jaredly.github.io/rxvision)
 
 You'll need `browserify`.
 
