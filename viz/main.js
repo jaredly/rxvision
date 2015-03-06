@@ -2,6 +2,7 @@
 
 import utils from './utils'
 import Tip from './tip'
+import {asString} from '../lib/utils'
 
 export default class Viz {
   constructor (node) {
@@ -30,6 +31,9 @@ export default class Viz {
     let groupNames = 'backs,ticks,lines,streams'.split(',')
     groupNames.forEach(name => groups[name] = mainGroup.append('g').attr('class', name))
 
+    groups.swimLines = groups.lines.append('g').attr('class', 'swim-lines')
+    groups.dataLinesBack = groups.lines.append('g').attr('class', 'data-lines-back')
+    groups.dataLines = groups.lines.append('g').attr('class', 'data-lines')
 
     mainGroup.attr('transform', `translate(${margin + leftBarWidth}, ${margin})`)
 
@@ -41,13 +45,13 @@ export default class Viz {
     this.leftBarGroup = leftBarGroup
   }
 
-  process(data) {
+  process(data, isSanitized) {
     let {streams, posMap, sids} = utils.processData(data)
 
     let crad = this.config.crad
     let cmar = this.config.cmar
     let margin = this.config.margin
-    let width = this.config.width
+    let width = this.config.width - this.config.leftBarWidth - margin*2
 
     let height = streams.length * (crad * 2 + cmar) - cmar + margin * 2
     let yscale = (height - margin*2) / streams.length
@@ -56,10 +60,26 @@ export default class Viz {
 
     let timeDiff = data.groups[data.groups.length-1].start - data.groups[0].start
     let totalWidth = data.groups.reduce((w, g) => w + g.width, 0)
-    let flexWidth = width - (totalWidth * (crad * 2 + cmar) - cmar)
-    let timeScale = flexWidth / timeDiff
+    let circleWidth = totalWidth * (crad * 2 + cmar) - cmar
+    /*
+    let flexWidth = 499 // width - circleWidth
+    if (flexWidth < 500) {
+      flexWidth = 500
+      width = flexWidth + circleWidth + margin*2 + this.config.leftBarWidth
+      this.config.width = width
+      this.svg.attr('width', width)
+    }
+    */
+    let timeScale = .01
+    let flexWidth = timeScale * timeDiff
+    // let timeScale = flexWidth / timeDiff
+
+      width = flexWidth + circleWidth + margin*2 + this.config.leftBarWidth
+      this.config.width = width
+      this.svg.attr('width', width)
 
     let starts = utils.getStarts(data.groups, timeScale, crad, cmar)
+    this.isSanitized = isSanitized
 
     this.veryStart = data.groups[0].start
 
@@ -84,7 +104,7 @@ export default class Viz {
     let margin = this.config.margin
     let y = this.ysid(value.sid) + margin + 40
     x += this.config.leftBarWidth + margin + 20
-    let text = 'Value: ' + value.value + '\n' +
+    let text = 'Value: ' + (this.isSanitized ? value : asString(value.value)).slice(0, 50) + '\n' +
                 (value.ts - this.veryStart)/1000 + 's\n'
     this.tip.show(x, y, text)
   }
@@ -97,29 +117,29 @@ export default class Viz {
     let margin = this.config.margin
     let leftBarWidth = this.config.leftBarWidth
 
-    let labels = this.leftBarGroup.selectAll('g.label')
-      .data(streams).enter()
+    let labels = this.leftBarGroup.selectAll('g.label').data(streams)
+    let labelsE = labels.enter()
       .append('g').attr('class', d => `label ${d.type}`)
-      .attr('transform', d => `translate(${margin}, ${margin + this.ysid(d.id)})`)
+      .on('mouseover', d => this.tip.show(leftBarWidth, this.ysid(d.id) + margin, utils.readStack(d.stack)))
+      .on('mouseout', () => this.tip.hide())
 
-    let lCircle = labels.append('circle')
+    labelsE.append('circle')
       .attr('cx', leftBarWidth - margin)
       .attr('cy', 0)
       .attr('r', crad)
 
-    let lText = labels.append('text')
+    labelsE.append('text')
       .attr('x', 0)
       .attr('y', 0)
       .text(d => d.title + ' [' + d.type + ']')
-
-    lText
       .attr('text-anchor', 'end')
       .attr('x', leftBarWidth - margin - crad - cmar)
       .text(d => d.title)
 
     labels
-      .on('mouseover', d => this.tip.show(leftBarWidth, this.ysid(d.id) + margin, utils.readStack(d.stack)))
-      .on('mouseout', () => this.tip.hide())
+      .attr('transform', d => `translate(${margin}, ${margin + this.ysid(d.id)})`)
+
+    labels.exit().remove()
   }
 
   makeBacks(groups, height) {
@@ -127,30 +147,33 @@ export default class Viz {
 
     let backs = this.groups.backs
       .selectAll('rect').data(groups)
-      .enter()
-      .append('rect')
+    backs
+      .enter().append('rect')
+    backs
       .attr('x', (d, i) => this.x(i, 0) - crad)
       .attr('width', d => d.width * (crad * 2 + cmar) - cmar)
       .attr('y', -margin/2)
       .attr('height', height - margin)
+    backs.exit().remove()
   }
 
   makeSwimLines(sids, streamMap) {
     let {margin, width} = this.config
-    let swimlines = this.groups.lines.append('g').attr('class', 'swim-lines')
+    let swimLines = this.groups.swimLines
       .selectAll('path').data(sids)
-      .enter()
-      .append('path')
+    swimLines
+      .enter().append('path')
+    swimLines
       .attr('d', d => `M ${-margin} ${this.ysid(d)} L ${width} ${this.ysid(d)}`)
       .attr('class', d => streamMap[d].type)
+    swimLines.exit().remove()
   }
 
   makeDataLines(dataLines) {
-    let tweenback = this.groups.lines.append('g').attr('class', 'data-lines-back')
+    let tweenback = this.groups.dataLinesBack
       .selectAll('path').data(dataLines)
+    tweenback
       .enter().append('path')
-      .attr('class', d => 'uid-' + d.uid)
-      .attr('d', d => `M ${d.from.x} ${d.from.y} L ${d.to.x} ${d.to.y}`)
       .on('mouseover', d => {
         this.groups.streams.selectAll('.uid-' + d.uid + ',.from-' + d.uid).classed('active', true)
         this.groups.lines.selectAll('.uid-' + d.uid).classed('active', true)
@@ -159,17 +182,26 @@ export default class Viz {
         this.groups.streams.selectAll('.uid-' + d.uid + ',.from-' + d.uid).classed('active', false)
         this.groups.lines.selectAll('.uid-' + d.uid).classed('active', false)
       })
-    let tweenlines = this.groups.lines.append('g').attr('class', 'data-lines')
-      .selectAll('path').data(dataLines)
-      .enter().append('path')
+    tweenback
       .attr('class', d => 'uid-' + d.uid)
       .attr('d', d => `M ${d.from.x} ${d.from.y} L ${d.to.x} ${d.to.y}`)
+    tweenback.exit().remove()
+
+    let tweenlines = this.groups.dataLines
+      .selectAll('path').data(dataLines)
+    tweenlines
+      .enter().append('path')
+    tweenlines
+      .attr('class', d => 'uid-' + d.uid)
+      .attr('d', d => `M ${d.from.x} ${d.from.y} L ${d.to.x} ${d.to.y}`)
+    tweenlines.exit().remove()
   }
 
   makeStreams(streams, posMap) {
     let ssel = this.groups.streams.selectAll('g.stream').data(streams)
     ssel.enter().append('g')
       .attr('class', 'stream')
+    ssel
       .attr('transform', d => `translate(0, ${this.ysid(d.id)})`)
     let makeDots = this.makeDots.bind(this)
     ssel.each(function (d) {makeDots(posMap, d, this)})
@@ -186,12 +218,6 @@ export default class Viz {
                                       posMap[v.uid].toAsync))
     let entered = dot.enter().append('g')
       .attr('class', d => 'dot uid-' + d.uid + (d.type === 'send' ? ' from-' + posMap[d.uid].from : ''), true)
-      .attr('transform', d => `translate(${this.x(d.agroup, d.xpos)}, 0)`)
-      .classed({
-        'start': d => (!posMap[d.uid].from && d.type === 'send'),
-        end: d => d.type === 'recv' && !posMap[d.uid].to.length,
-        recv: d => d.type === 'recv',
-      })
       .on('mouseover', d => {
         this.showValueTip(this.x(d.agroup, d.xpos), d)
 
@@ -214,18 +240,21 @@ export default class Viz {
           this.groups.lines.selectAll('.uid-' + from).classed('active', false)
         }
       })
+
+    dot
+      .attr('transform', d => `translate(${this.x(d.agroup, d.xpos)}, 0)`)
+      .classed({
+        'start': d => (!posMap[d.uid].from && d.type === 'send'),
+        end: d => d.type === 'recv' && !posMap[d.uid].to.length,
+        recv: d => d.type === 'recv',
+      })
+
     let backCircle = entered.append('circle')
       .attr('class', 'back')
-      .attr('r', d => {
-        let pm = posMap[d.uid]
-        if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad*1.5
-        if (d.type === 'recv' && !pm.to.length) return crad*1.5
-        if (d.type === 'recv' && !pm.sourced) return crad*1.5
-        return crad
-      })
       .attr('cx', 0)
       .attr('cy', 0)
     let circle = entered.append('circle')
+      .attr('class', 'front')
       .attr('r', d => {
         let pm = posMap[d.uid]
         if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad
@@ -235,6 +264,24 @@ export default class Viz {
       })
       .attr('cx', 0)
       .attr('cy', 0)
+
+    dot.select('circle.front')
+      .attr('r', d => {
+        let pm = posMap[d.uid]
+        if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad
+        if (d.type === 'recv' && !pm.to.length) return crad
+        if (d.type === 'recv' && !pm.sourced) return crad
+        return crad / 2
+      })
+    dot.select('circle.back')
+      .attr('r', d => {
+        let pm = posMap[d.uid]
+        if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad*1.5
+        if (d.type === 'recv' && !pm.to.length) return crad*1.5
+        if (d.type === 'recv' && !pm.sourced) return crad*1.5
+        return crad
+      })
+
     dot.exit().remove()
   }
 }

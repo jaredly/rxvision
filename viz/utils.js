@@ -76,6 +76,7 @@ function getDataLines(posMap, x, ysid) {
     let {ends, agroup, xpos, sid} = posMap[uid]
     ends.forEach(dest => {
       dataLines.push({
+        id: uid,
         uid,
         from: {
           y: ysid(sid),

@@ -12,7 +12,7 @@ function main() {
   let tracer = new Tracer({
     filterFiles: ['rx.all.js', 'rxvision.js'],
     onValue: function (entry, id) {
-      console.log('rxvision', entry.type, entry.value, id, entry)
+      // console.log('rxvision', entry.type, entry.value, id, entry)
     }
   })
   wrap(window.Rx, tracer)
