@@ -28,5 +28,8 @@
     "babel": "^4.6.6",
     "babelify": "^5.0.3",
     "react": "^0.12.2"
+  },
+  "dependencies": {
+    "object-assign": "^2.0.0"
   }
 }

@@ -1,6 +1,6 @@
 'use strict'
 
-import utils from './utils'
+import utils from '../lib/utils'
 
 export default function wrap(Rx, tracer) {
   let oProto = Rx.Observable.prototype
@@ -18,6 +18,24 @@ export default function wrap(Rx, tracer) {
       meta: {
         el: arguments[0],
       },
+    })
+    let obs = oMap.call(
+      fn.apply(this, arguments),
+      tracer.traceMap(sid, 'send')
+    )
+    obs.__rxvision_id = sid
+    return obs
+  })
+
+  // decorate fromEvent
+  utils.decorate(Rx.Observable, 'create', fn => function () {
+    let stack = tracer.getStack()
+    if (!stack) return fn.apply(this, arguments)
+    let sid = tracer.addStream({
+      type: 'create',
+      title: 'create',
+      source: null,
+      stack: stack,
     })
     let obs = oMap.call(
       fn.apply(this, arguments),
@@ -89,11 +107,23 @@ export default function wrap(Rx, tracer) {
         })
         args[i] = oMap.call(old, tracer.traceMap(sid, isWrapped ? 'recv' : 'pass'))
       }
+    } else if (name === 'flatMap') {
+      let mapper = args[0]
+      args[0] = function () {
+        let full = arguments[0]
+        arguments[0] = arguments[0].value
+        let childObs = mapper.apply(this, arguments)
+        if (childObs.__rxvision_id) {
+          tracer.trace(childObs.__rxvision_id, 'recv', full)
+        }
+        return oMap.call(childObs, tracer.traceMap(sid, 'recv'))
+      }
+      // args[0] = oMap.call(args[0], tracer.traceMap(sid, 'recv'))
     }
 
     let obs = oMap.call(
       fn.apply(
-        oMap.call(this, tracer.traceMap(sid, 'recv')),
+        name === 'flatMap' ? this : oMap.call(this, tracer.traceMap(sid, 'recv')),
         args),
       tracer.traceMap(sid, 'send')
     )
