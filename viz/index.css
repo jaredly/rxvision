@@ -1,0 +1,109 @@
+
+.rxvision {
+  position: relative;
+  max-width: 100%;
+}
+
+.tip {
+  position: absolute;
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  background-color: white;
+  font-family: monospace;
+  pointer-events: none;
+  white-space: pre;
+  transition: top .2s ease, left .2s ease, opacity .3s ease;
+  margin-left: 30px;
+  margin-top: 0;
+}
+circle {
+  cursor: pointer;
+}
+.swim-lines path {
+  stroke: #eee;
+  stroke-width: 1px;
+  pointer-events: none;
+}
+
+.label.subscribe circle {
+  fill: #3e7;
+}
+.swim-lines path.subscribe {
+  stroke: #afa;
+  stroke-width: 3px;
+}
+
+.label.create circle {
+  fill: #5af;
+}
+.swim-lines path.create {
+  stroke: #5af;
+  stroke-width: 1px;
+}
+
+.label.fromEvent circle {
+  fill: #f7f;
+}
+.swim-lines path.fromEvent {
+  stroke: #f7f;
+  stroke-width: 1px;
+}
+
+.label.startWith circle {
+  fill: #f44;
+}
+.swim-lines path.startWith {
+  stroke: #f44;
+  stroke-width: 1px;
+}
+
+.data-lines {
+  pointer-events: none;
+}
+
+.data-lines path {
+  stroke: #25f;
+  stroke-width: 2px;
+  cursor: pointer;
+  pointer-events: none;
+}
+.data-lines path.active {
+  stroke-width: 6px;
+}
+.dot.active circle {
+  /*fill: red;*/
+}
+.dot.start circle {
+  fill: #5af;
+}
+.dot.end circle {
+  fill: #0b4;
+}
+.backs rect {
+  cursor: pointer;
+  fill: #fafafa;
+  stroke: #aaa;
+}
+.backs rect:hover {
+  fill: #f7f7f7;
+}
+.dot circle.back {
+  opacity: 0;
+  fill: #f55;
+}
+.dot:hover circle.back,
+.dot.active circle.back {
+  opacity: 1;
+}
+.data-lines-back {
+  cursor: pointer;
+}
+.data-lines-back path {
+  stroke: red;
+  opacity: 0;
+  stroke-width: 10px;
+}
+.left-bar .label {
+  cursor: pointer;
+}
+
