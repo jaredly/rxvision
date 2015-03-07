@@ -1,4 +1,9 @@
 
+.rxvision {
+  position: relative;
+  max-width: 100%;
+}
+
 .tip {
   position: absolute;
   padding: 5px 10px;
@@ -77,6 +82,7 @@ circle {
 .backs rect {
   cursor: pointer;
   fill: #fafafa;
+  stroke: #aaa;
 }
 .backs rect:hover {
   fill: #f7f7f7;

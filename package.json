@@ -27,6 +27,8 @@
   "devDependencies": {
     "babel": "^4.6.6",
     "babelify": "^5.0.3",
+    "codemirror": "^5.0.0",
+    "less": "^2.4.0",
     "react": "^0.12.2"
   },
   "dependencies": {

@@ -9,6 +9,10 @@ export default class Viz {
     this.setup(node)
   }
 
+  teardown() {
+    this.div.remove()
+  }
+
   setup(node) {
     this.config = {
       crad: 5,
@@ -24,7 +28,11 @@ export default class Viz {
     let leftBarWidth = this.config.leftBarWidth
 
     let height = 10 * (crad * 2 + cmar) - cmar + margin * 2
-    let svg = d3.select(node).append('svg').attr('width', this.config.width).attr('height', height)
+    let div = this.div =  d3.select(node).append('div')
+      .attr('class', 'rxvision')
+    let svg = div.append('svg')
+      .attr('width', this.config.width)
+      .attr('height', height)
     let mainGroup = svg.append('g')
     let groups = {}
 
@@ -39,7 +47,7 @@ export default class Viz {
 
     let leftBarGroup = svg.append('g').attr('class', 'left-bar')
 
-    this.tip = new Tip(node)
+    this.tip = new Tip(div)
     this.svg = svg
     this.groups = groups
     this.leftBarGroup = leftBarGroup
@@ -102,8 +110,8 @@ export default class Viz {
 
   showValueTip(x, value) {
     let margin = this.config.margin
-    let y = this.ysid(value.sid) + margin + 40
-    x += this.config.leftBarWidth + margin + 20
+    let y = this.ysid(value.sid) + margin + 30
+    x += this.config.leftBarWidth + margin + 10
     let text = 'Value: ' + (this.isSanitized ? value : asString(value.value)).slice(0, 50) + '\n' +
                 (value.ts - this.veryStart)/1000 + 's\n'
     this.tip.show(x, y, text)
@@ -213,7 +221,7 @@ export default class Viz {
     let cmar = this.config.cmar
 
     var dot = d3.select(node).selectAll('g.dot')
-      .data(stream.values.filter(v => v.type !== 'recv' ||
+      .data(stream.type === 'subscribe' ? stream.values : stream.values.filter(v => v.type !== 'recv' ||
                                       !posMap[v.uid].to.length ||
                                       posMap[v.uid].toAsync))
     let entered = dot.enter().append('g')
@@ -245,7 +253,7 @@ export default class Viz {
       .attr('transform', d => `translate(${this.x(d.agroup, d.xpos)}, 0)`)
       .classed({
         'start': d => (!posMap[d.uid].from && d.type === 'send'),
-        end: d => d.type === 'recv' && !posMap[d.uid].to.length,
+        end: d => stream.type === 'subscribe' || (d.type === 'recv' && !posMap[d.uid].to.length),
         recv: d => d.type === 'recv',
       })
 
@@ -255,19 +263,13 @@ export default class Viz {
       .attr('cy', 0)
     let circle = entered.append('circle')
       .attr('class', 'front')
-      .attr('r', d => {
-        let pm = posMap[d.uid]
-        if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad
-        if (d.type === 'recv' && !pm.to.length) return crad
-        if (d.type === 'recv' && !pm.sourced) return crad
-        return crad / 2
-      })
       .attr('cx', 0)
       .attr('cy', 0)
 
     dot.select('circle.front')
       .attr('r', d => {
         let pm = posMap[d.uid]
+        if (stream.type === 'subscribe') return crad
         if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad
         if (d.type === 'recv' && !pm.to.length) return crad
         if (d.type === 'recv' && !pm.sourced) return crad
@@ -276,6 +278,7 @@ export default class Viz {
     dot.select('circle.back')
       .attr('r', d => {
         let pm = posMap[d.uid]
+        if (stream.type === 'subscribe') return crad * 1.5
         if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad*1.5
         if (d.type === 'recv' && !pm.to.length) return crad*1.5
         if (d.type === 'recv' && !pm.sourced) return crad*1.5

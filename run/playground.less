@@ -1,0 +1,100 @@
+
+@import (inline) "../node_modules/codemirror/lib/codemirror.css";
+@import (inline) "../node_modules/codemirror/addon/hint/show-hint.css";
+@import (inline) "../node_modules/codemirror/addon/fold/foldgutter.css";
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  text-align: center;
+  background-color: #F4511E;
+  color: white;
+  padding: 10px 0 20px;
+  margin-bottom: 20px;
+
+  a {
+    color: white;
+    font-weight: bold;
+    font-variant: small-caps;
+    text-decoration: none;
+    background-color: #FF7043;
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 0 5px;
+
+    &:visited {
+      color: white;
+    }
+  }
+}
+
+.Playground {
+  &_panes {
+    display: flex;
+    height: 600px;
+    position: relative;
+
+    > div {
+      flex: 1;
+    }
+  }
+
+  &_run {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+  }
+}
+
+.output {
+  padding: 20px 30px;
+  border-bottom: 1px solid #ccc;
+}
+
+.left-side {
+  position: relative;
+}
+
+.left-side > div:first-child {
+  height: 200px;
+}
+.left-side > div:first-child + div {
+  height: 400px;
+}
+
+.right-side {
+  display: flex;
+  flex-direction: column;
+}
+
+.log {
+  overflow: auto;
+  flex: 1;
+}
+
+.log .log-item {
+  padding: 10px 20px;
+
+  span {
+    margin: 0 4px;
+  }
+
+  &:hover {
+    background-color: #eee;
+  }
+}
+
+.right-side {
+  box-shadow: 0 0 5px #aaa inset;
+}
+

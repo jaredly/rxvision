@@ -2,7 +2,7 @@
 
 export default class Tip {
   constructor(node) {
-    this.node = d3.select(node).append('div').attr('class', 'tip')
+    this.node = node.append('div').attr('class', 'tip')
   }
 
   hide() {

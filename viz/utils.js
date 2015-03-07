@@ -21,7 +21,7 @@ function getPosMap(streams) {
         }
         if (posMap[from]) {
           posMap[from].to.push(value.uid)
-          if (value.async || value.agroup !== posMap[from].agroup) {
+          if (value.async || value.agroup !== posMap[from].agroup || value.xpos !== posMap[from].xpos) {
             posMap[from].toAsync = true
           }
         }
@@ -112,6 +112,11 @@ function readStack(stack) {
   if (parts.length === 2) { // in a function
     name = parts.shift()
     parts[0] = parts[0].slice(1, -1)
+  }
+  if (parts[0] === 'eval') {
+    name = 'eval'
+    parts = parts.slice(-1)
+    parts[0] = parts[0].slice(0, -1)
   }
   let finfo = parts[0].split('/').slice(-1)[0].split(':')
   return name + ' ' + finfo[0] + ` (${finfo.slice(1).join(':')})`

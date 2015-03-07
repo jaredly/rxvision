@@ -27,6 +27,27 @@ export default function wrap(Rx, tracer) {
     return obs
   })
 
+  // decorate fromArray
+  utils.decorate(Rx.Observable, 'fromArray', fn => function (arr) {
+    let stack = tracer.getStack()
+    if (!stack) return fn.apply(this, arguments)
+    let sid = tracer.addStream({
+      type: 'fromArray',
+      title: `from array (ln ${arr.length})`,
+      source: null,
+      stack: stack,
+      meta: {
+        array: arr,
+      },
+    })
+    let obs = oMap.call(
+      fn.apply(this, arguments),
+      tracer.traceMap(sid, 'send')
+    )
+    obs.__rxvision_id = sid
+    return obs
+  })
+
   // decorate fromEvent
   utils.decorate(Rx.Observable, 'create', fn => function () {
     let stack = tracer.getStack()
