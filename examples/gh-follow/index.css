@@ -31,3 +31,31 @@ li .username, li .close {
     bottom: 15px;
     left: 5px;
 }
+.container {
+    margin: 20px;
+}
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+header {
+  text-align: center;
+  background-color: #F4511E;
+  color: white;
+  padding: 10px 0 20px;
+  margin-bottom: 20px;
+}
+header a {
+  color: white;
+  font-weight: bold;
+  font-variant: small-caps;
+  text-decoration: none;
+  background-color: #FF7043;
+  display: inline-block;
+  padding: 5px 10px;
+  margin: 0 5px;
+}
+header a:visited {
+  color: white;
+}
