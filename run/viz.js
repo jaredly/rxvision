@@ -24,8 +24,11 @@ function main() {
     return console.warn('RxVision tracer not found')
   }
 
-  let div = document.createElement('div')
-  document.body.appendChild(div)
+  let div = document.querySelector('[data-rxvision]')
+  if (!div) {
+    div = document.createElement('div')
+    document.body.appendChild(div)
+  }
 
   let viz = new Viz(div)
   // viz.process({streams: tracer.streams, groups: tracer.agroups})
