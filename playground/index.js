@@ -33,11 +33,11 @@ function debounce(fn, time) {
 
 let ex_js = `\
 let btn = $('button')[0]
-let clicks = Rx.Observable.fromEvent(btn, 'click')
+let clicks = Rx.Observable.fromEvent(btn, 'click').share()
 clicks.subscribe(value => console.log('clicked!'))
 
-let randoms = clicks.map(() => Math.floor(Math.random() * 10 + 2))
-let values = randoms.merge(Rx.Observable.fromArray([4,5,6]))
+let values = clicks.map(() => Math.floor(Math.random() * 10 + 2))
+// let values = randoms.merge(Rx.Observable.fromArray([4,5,6]))
 let less1 = values.map(value => value - 1)
 let times2 = less1.map(value => value*2)
 
@@ -63,7 +63,7 @@ export default React.createClass({
   getInitialState() {
     return {
       html: '<button>Click me</button>',
-      js: ex_js,
+      js: this.props.js || ex_js,
       output: []
     }
   },
