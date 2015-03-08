@@ -51,6 +51,16 @@ li .close {
   border-radius: 24px;
   font-weight: bold;
   color: #faa;
+  border: none;
+  cursor: pointer;
+}
+
+li .close:focus {
+    outline: none;
+}
+
+.refresh {
+    cursor: pointer;
 }
 
 li .close:hover {
@@ -85,4 +95,28 @@ header a {
 }
 header a:visited {
   color: white;
+}
+
+.panes {
+  display: flex;
+}
+
+.panes > .left-side {
+    flex: 1;
+}
+
+.bottom > .rxvision {
+  flex: 1;
+  overflow: auto;
+}
+
+.right-side {
+    overflow-y: auto;
+    height: 800px;
+    font-size: 12px;
+    margin-left: 20px;
+}
+
+.right-side > pre.language-javascript {
+    margin: 0;
 }

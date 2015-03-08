@@ -404,9 +404,16 @@ header a {
 header a:visited {
   color: white;
 }
+.main-loading {
+  color: #888;
+  font-weight: bold;
+  text-align: center;
+  margin: 100px;
+  font-size: 60px;
+}
 .Playground_panes {
   display: flex;
-  height: 600px;
+  height: 400px;
   position: relative;
 }
 .Playground_panes > div {
@@ -430,11 +437,11 @@ header a:visited {
 .left-side {
   position: relative;
 }
-.left-side > div:first-child {
-  height: 200px;
+.left-side > div:first-child .CodeMirror {
+  height: 100px;
 }
-.left-side > div:first-child + div {
-  height: 400px;
+.left-side > div:first-child + div .CodeMirror {
+  height: 300px;
 }
 .right-side {
   display: flex;
@@ -445,7 +452,8 @@ header a:visited {
   flex: 1;
 }
 .log .log-item {
-  padding: 10px 20px;
+  padding: 5px 10px;
+  font-size: 14px;
 }
 .log .log-item span {
   margin: 0 4px;
