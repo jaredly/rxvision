@@ -3,7 +3,7 @@
 import React from 'react'
 let {PropTypes: PT} = React
 
-import calc from './calc'
+export * from './calc'
 
 export default React.createClass({
   propTypes: {
@@ -21,7 +21,7 @@ export default React.createClass({
   }
 })
 
-function showPoints(groups, posmap, width, height, margin) {
+export function showPoints(groups, posmap, width, height, margin) {
   let w = width - margin*2
   let h = height - margin*2
   return <svg width={900} height={600}>
