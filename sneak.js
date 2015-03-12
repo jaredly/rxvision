@@ -1,4 +1,17 @@
-(function(Rx) {
+(function(sneak) {
+  // CommonJS
+  if (typeof exports == "object" && typeof module == "object") {
+    // requires Rx to be passed in
+    module.exports = sneak;
+  // AMD
+  } else if (typeof define == "function" && define.amd)  {
+    return define([], sneak);
+  // Plain browser env
+  } else {
+    // Rx should be globally available
+    sneak(Rx);
+  }
+})(function(Rx) {
 
 var proto = Rx.Observable.prototype
 var map = proto.map
@@ -250,4 +263,4 @@ proto.subscribe = function (fn, onErr, comp) {
   */
 }
 
-}(Rx))
+})
