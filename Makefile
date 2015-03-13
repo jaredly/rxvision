@@ -1,5 +1,9 @@
 
-build: build/react.js js
+
+build: builddir build/react.js js
+
+builddir:
+	mkdir -p build
 
 build/react.js:
 	browserify -r react -r react/addons -o build/react.js
