@@ -9,7 +9,7 @@ build/react.js:
 	browserify -r react -r react/addons -o build/react.js
 
 build/d3.js:
-	wget https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js -O build/d3.js
+	wget http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js -O build/d3.js
 
 rx:
 	browserify -d -t babelify run/rx.js -o build/rxvision.js
