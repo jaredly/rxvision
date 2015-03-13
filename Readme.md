@@ -1,6 +1,7 @@
 # Take off the blindfold
 
 [![Join the chat at https://gitter.im/jaredly/rxvision](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jaredly/rxvision?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 It's easier to understand what's happening if you can look at it.
 
 `rxvision` is a tool to visualize and debug your RxJS reactive streams.
