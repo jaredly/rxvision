@@ -1,18 +1,12 @@
 
 
-build: builddir build/react.js js
+build: builddir build/react.js rx viz
 
 builddir:
 	mkdir -p build
 
 build/react.js:
 	browserify -r react -r react/addons -o build/react.js
-
-js:
-	browserify -x react -x react/addons -d -t babelify run.js -o build/run.js
-
-watch:
-	watchify -v -x react -x react/addons -d -t babelify run.js -o build/run.js
 
 rx:
 	browserify -d -t babelify run/rx.js -o build/rxvision.js
