@@ -16,7 +16,15 @@ You'll need `browserify`.
 npm install
 make
 ```
-then open `index.html` in a browser.
+
+Then you need to run a static server (so ajax will work in the demo). I use
+`http-server` (`npm install -g http-server`):
+
+```
+http-server -p 4321
+```
+
+then open http://localhost:4321/examples/gh-follow/index.html in a browser.
 
 # Usage (so far)
 I make no promises, this is very WIP.
