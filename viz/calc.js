@@ -1,5 +1,5 @@
 
-export {pointed, settle, showPoints}
+export {pointed, settle}
 
 function findSucc(data, tid) {
   return Object.keys(data).filter(name => data[name].previf == tid)
