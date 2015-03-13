@@ -36,13 +36,13 @@ function pointed(data, width, height, margin, sep) {
   let y = margin
   let x = margin
   let r = 5
-  
+
   let yd = h / Object.keys(data).length
 
   let groups = []
   let grix = {}
   let posmap = {}
-  
+
   let render = tid => {
     let item = data[tid]
     groups.push(renderPoints(item, x, y, sep, posmap))
