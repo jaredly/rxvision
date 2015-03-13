@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+    <title>Reactive Streams Playground</title>
+    <link rel="stylesheet" href="../../viz/index.css">
+    <link rel="stylesheet" href="index.css">
+    <meta charset="utf8">
+</head>
+<body>
+    <header class="top">
+        <h1>KefirVision Playground</h1>
+        <a href="https://jaredly.github.com/rxvision">home</a>
+        <a href="https://github.com/jaredly/rxvision" target="_blank">github</a>
+    </header>
+<script type="text/example" id="example">
+let btn = $('button')[0]
+let clicks = Kefir.fromEvent(btn, 'click')
+clicks.log()
+clicks.map(v => 5).log()
+let em = Kefir.emitter()
+em.map(v => v/2).log()
+em.emit(100)
+
+var a = Kefir.emitter();
+var b = Kefir.emitter();
+
+var pool = Kefir.pool();
+pool.log();
+
+a.emit(1);
+b.emit(1);
+pool.plug(a);
+a.emit(2);
+b.emit(2);
+pool.plug(b);
+a.emit(3);
+b.emit(3);
+pool.unplug(a);
+a.emit(4);
+b.emit(4);
+a.end();
+b.end();
+</script>
+    <div id="playground"><h1 class="main-loading">Loading</h1></div>
+    <script src="../../build/kefir.js"></script>
+    <script src="../../build/kefirvision.js"></script>
+    <script src="../../build/d3.js"></script>
+    <script src="../../build/lib-playground.js"></script>
+    <script src="../../build/playground.js"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-7002862-5', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</body>
+</html>
+
