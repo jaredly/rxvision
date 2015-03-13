@@ -31,21 +31,6 @@ function debounce(fn, time) {
   }
 }
 
-let ex_js = `\
-let btn = $('button')[0]
-let clicks = Rx.Observable.fromEvent(btn, 'click').share()
-clicks.subscribe(value => console.log('clicked!'))
-
-let values = clicks.map(() => Math.floor(Math.random() * 10 + 2))
-// let values = randoms.merge(Rx.Observable.fromArray([4,5,6]))
-let less1 = values.map(value => value - 1)
-let times2 = less1.map(value => value*2)
-
-times2.subscribe(value => console.log('i got a value', value))
-times2.subscribe(value => console.log('also subscribing', value))
-values.subscribe(value => console.log('the original was', value))
-`;
-
 var cmProps = {
   style: {},
   indentWidth: 2,
@@ -63,12 +48,20 @@ export default React.createClass({
   getInitialState() {
     return {
       html: '<button>Click me</button>',
-      js: this.props.js || ex_js,
+      js: this.props.js || 'console.log("Hello!")',
       output: []
     }
   },
 
   componentDidMount() {
+    this._old_log = window.console.log
+    window.console.log = (...args) => {
+      this.setState({
+        output: this.state.output.concat([{
+          type: 'log', values: args
+        }])
+      })
+    }
     this.run()
   },
 

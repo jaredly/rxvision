@@ -420,6 +420,7 @@ header a:visited {
   flex: 1;
 }
 .Playground_run {
+  z-index: 1000;
   position: absolute;
   bottom: 10px;
   right: 10px;

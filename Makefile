@@ -11,6 +11,12 @@ build/react.js:
 build/d3.js:
 	wget http://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.js -O build/d3.js
 
+kefir:
+	browserify -d -t babelify run/kefir.js -o build/kefirvision.js
+
+kefir-watch:
+	watchify -v -d -t babelify run/kefir.js -o build/kefirvision.js
+
 rx:
 	browserify -d -t babelify run/rx.js -o build/rxvision.js
 
