@@ -14,9 +14,19 @@ export default function wrap(Kefir, tracer) {
     utils.decorate(pProto, name, dec(pMap))
   }
 
-  let wrapping = ['map', 'mapTo', 'selectBy', 'combine', 'merge', 'flatMap']
+  let wrapping = ['map', 'mapTo', 'selectBy', 'combine', 'merge', 'flatMap', 'flatMapLatest', 'flatMapConcat', 'flatMapFirst', 'flatMapConcurLimit']
+  let twoObs = ['filterBy']
 
-  wrapping.forEach(name => decorate(name, map => fn => function () {
+  function decoractive(obs) {
+    utils.decorate(obs, '_setActive', fn => function (active) {
+      if (active !== this._active) {
+        tracer.trace(obs.__rxvision_id, 'active', null, active)
+      }
+      return fn.call(this, active)
+    })
+  }
+
+  wrapping.concat(twoObs).forEach(name => decorate(name, map => fn => function () {
     let previd = this.__rxvision_id
     if (!previd) return fn.apply(this, arguments)
     let stack = tracer.getStack() // are we in user code or rx code?
@@ -32,15 +42,47 @@ export default function wrap(Kefir, tracer) {
 
     let args = [].slice.call(arguments)
 
+    if (twoObs.indexOf(name) !== -1) {
+      let other = args[0]
+      let isWrapped = !!other.__rxvision_id
+      other.__rxvision_id = other.__rxvision_id || tracer.addStream({
+        type: name,
+        title: 'from ' + name + ' with ' + previd,
+        source: null,
+        stack: null,
+        meta: {
+          combineWith: previd,
+          result: sid,
+        },
+      })
+
+      args[0] = map.call(other, tracer.traceMap(sid, isWrapped ? 'recv' : 'pass'))
+    }
+
+    if (name.indexOf('flatMap') === 0) {
+      let mapper = args[0]
+      args[0] = function () {
+        let full = arguments[0]
+        arguments[0] = arguments[0].value
+        let childObs = mapper.apply(this, arguments)
+        if (childObs.__rxvision_id) {
+          tracer.trace(childObs.__rxvision_id, 'recv', full)
+        }
+        return map.call(childObs, tracer.traceMap(sid, 'recv'))
+      }
+    }
+
     let obs = map.call(
       fn.apply(
-        map.call(this, tracer.traceMap(sid, 'recv')),
+        name.indexOf('flatMap') === 0 ? this : map.call(this, tracer.traceMap(sid, 'recv', this)),
         args),
-      tracer.traceMap(sid, 'send')
+      tracer.traceMap(sid, 'send', this)
     )
     obs.__rxvision_id = sid
+    decoractive(obs)
     return obs
   }))
+
 
   // initializers
   let initializers = {
@@ -55,6 +97,14 @@ export default function wrap(Kefir, tracer) {
     // emitter: false,
     // bus: false,
     sequentially: false,
+    interval(ival, value) {
+      return {
+        title: value + ' every ' + ival + 'ms',
+        meta: {
+          value: value
+        }
+      }
+    },
     later: false,
   }
   Object.keys(initializers).forEach(name => utils.decorate(Kefir, name, fn => function () {
@@ -76,9 +126,10 @@ export default function wrap(Kefir, tracer) {
     let sid = tracer.addStream(options)
     let obs = sMap.call(
       fn.apply(this, arguments),
-      tracer.traceMap(sid, 'send')
+      tracer.traceMap(sid, 'send', this)
     )
     obs.__rxvision_id = sid
+    decoractive(obs)
     return obs
   }))
 
@@ -95,6 +146,7 @@ export default function wrap(Kefir, tracer) {
     let sid = tracer.addStream(options)
     let em = fn.apply(this, arguments)
     em.__rxvision_id = sid
+    decoractive(em)
     return em
   })
 
@@ -113,6 +165,7 @@ export default function wrap(Kefir, tracer) {
     let sid = tracer.addStream(options)
     let em = fn.apply(this, arguments)
     em.__rxvision_id = sid
+    decoractive(em)
     if (name === 'bus' || name === 'pool') {
       this._rxv_plugmap = new Map()
     }
@@ -121,13 +174,13 @@ export default function wrap(Kefir, tracer) {
 
   utils.decorate(Kefir.Emitter.prototype, 'emit', fn => function (value) {
     if (!this.__rxvision_id) return fn.apply(this, arguments)
-    value = tracer.trace(this.__rxvision_id, 'send', value)
+    value = tracer.trace(this.__rxvision_id, 'send', this, value)
     fn.call(this, value)
   })
 
   utils.decorate(Kefir.Bus.prototype, 'emit', fn => function (value) {
     if (!this.__rxvision_id) return fn.apply(this, arguments)
-    value = tracer.trace(this.__rxvision_id, 'send', value)
+    value = tracer.trace(this.__rxvision_id, 'send', this, value)
     fn.call(this, value)
   })
 
@@ -136,7 +189,7 @@ export default function wrap(Kefir, tracer) {
   pools.forEach(proto => {
     utils.decorate(proto, 'plug', fn => function (value) {
       if (!this.__rxvision_id) return fn.apply(this, arguments)
-      let other = sMap.apply(value, tracer.traceMap(this.__rxvision_id, 'pass-wrapped'))
+      let other = sMap.apply(value, tracer.traceMap(this.__rxvision_id, 'pass-wrapped', this))
       if (!this._rxv_plugmap) {
         this._rxv_plugmap = new Map()
       }
@@ -228,7 +281,7 @@ export default function wrap(Kefir, tracer) {
 
     // TODO(jared): log errors, completions
     return fn.apply(
-      map.call(this, tracer.traceMap(sid, 'recv')),
+      map.call(this, tracer.traceMap(sid, 'recv', this)),
       arguments)
   }))
 

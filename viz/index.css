@@ -79,6 +79,15 @@ circle {
 .dot.end circle {
   fill: #0b4;
 }
+.dot.inactive circle {
+    fill: #aaa;
+}
+.dot.activate circle {
+    fill: green;
+}
+.dot.deactivate circle {
+    fill: red;
+}
 .backs rect {
   cursor: pointer;
   fill: #fafafa;

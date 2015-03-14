@@ -117,7 +117,7 @@ export default React.createClass({
             smartIndent={false}
             value={this.state.html}
             onBlur={this.props.onBlur}
-            goDown={() => this.refs.less.focus()}
+            goDown={_ => this.refs.js.focus()}
             onChange={val => this.setState({html: val})} {...cmProps}/>
           <CodeMirrorRx
             ref="js"
@@ -125,7 +125,7 @@ export default React.createClass({
             smartIndent={false}
             value={this.state.js}
             onBlur={this.props.onBlur}
-            goDown={() => this.refs.less.focus()}
+            goUp={_ => this.refs.html.focus()}
             onChange={val => this.setState({js: val})} {...cmProps}/>
           <button className='Playground_run' onClick={this.run}>Run</button>
         </div>

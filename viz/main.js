@@ -253,7 +253,10 @@ export default class Viz {
       .attr('transform', d => `translate(${this.x(d.agroup, d.xpos)}, 0)`)
       .classed({
         'start': d => (!posMap[d.uid].from && d.type === 'send'),
-        end: d => stream.type === 'subscribe' || (d.type === 'recv' && !posMap[d.uid].to.length),
+        activate: d => d.type === 'active' && d.value,
+        deactivate: d => d.type === 'active' && !d.value,
+        // inactive: d => !d.active,
+        end: d => stream.type === 'subscribe' || stream.type === 'log' || (d.type === 'recv' && !posMap[d.uid].to.length),
         recv: d => d.type === 'recv',
       })
 

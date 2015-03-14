@@ -1,5 +1,7 @@
 'use strict'
 
+import './viz.less'
+
 import Viz from '../viz/main'
 
 import data from './test-data.json'

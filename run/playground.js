@@ -1,5 +1,7 @@
 'use strict'
 
+import './playground.less'
+
 import React from 'react'
 import Playground from '../playground'
 
