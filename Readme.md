@@ -10,11 +10,11 @@ It's easier to understand what's happening if you can look at it.
 
 # The Demo [(see it live)](https://jaredly.github.io/rxvision)
 
-You'll need `browserify`.
+You'll need `webpack` installed globally (`npm install -g webpack`).
 
 ```
 npm install
-make
+webpack
 ```
 
 Then you need to run a static server (so ajax will work in the demo). I use
@@ -26,15 +26,8 @@ http-server -p 4321
 
 then open http://localhost:4321/examples/gh-follow/index.html in a browser.
 
-# Usage (so far)
-I make no promises, this is very WIP.
+# Usage
 
-- Add `sneak.js` to your page, after `rx.all.js` but before your code.
-- run your page, do some things to trigger streams
-- run `RxVision.dump()` from the console. Replace `data.json` with the output.
-- run `make` again.
-
-That ought to work, but no promises yet. Fire up an issue if it doesn't.
-
+Check out the `gh-follow` source, or play with the playground [here](http://jaredly.github.io/rxvision/examples/playground/).
 
 
