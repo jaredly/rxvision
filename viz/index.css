@@ -16,6 +16,9 @@
   margin-left: 30px;
   margin-top: 0;
 }
+.tip:empty {
+    display: none;
+}
 circle {
   cursor: pointer;
 }

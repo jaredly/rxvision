@@ -11,6 +11,7 @@ module.exports = {
     'viz': './run/viz.js',
     'kefirvision': './run/kefir.js',
     'playground': './run/playground.js',
+    'tests': './run/tests.js',
   },
 
   node: {

@@ -42,6 +42,7 @@
     "webpack": "^1.7.3"
   },
   "dependencies": {
+    "kefir": "^1.2.0",
     "object-assign": "^2.0.0"
   }
 }
