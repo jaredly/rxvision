@@ -1,8 +1,79 @@
 
 import {ACTIVE, DEACTIVE} from '../consts'
 
-export default [
+import oneSource from './one-source.json'
+import twoSources from './two-sources.json'
+import multSources from './multiple-sources.json'
+import create from './create.json'
+
+let sources = [oneSource, twoSources, multSources, create]
+sources = [twoSources]
+
+let cases = sources.map(examples => Object.keys(examples).map(name => {
+  return {
+    title: name,
+    it: new Function('Kefir', examples[name][0].code),
+    events: examples[name][0].events,
+  }
+})).reduce((ful, one) => ful.concat(one))
+
+export default cases
+
+let olds = [
   {
+    title: 'skipWhile',
+    it(Kefir) {
+      var source = Kefir.sequentially(100, [1, 3, 2]);
+      var result = source.skipWhile(function(x) {  return x < 3  });
+      result.log();
+    },
+  },{
+    title: 'skip',
+    it(Kefir) {
+      var source = Kefir.sequentially(100, [1, 2, 3]);
+      var result = source.skip(2);
+      result.log();
+    },
+  },
+  {
+    title: 'takeWhile',
+    it(Kefir) {
+      var source = Kefir.sequentially(100, [1, 2, 3]);
+      var result = source.takeWhile(function(x) {  return x < 3  });
+      result.log();
+    },
+  },
+  {
+    title: 'take',
+    it(Kefir) {
+      var source = Kefir.sequentially(100, [1, 2, 3]);
+      var result = source.take(2);
+      result.log();
+    },
+  },
+  {
+    title: 'filter',
+    it(Kefir) {
+      var source = Kefir.sequentially(100, [1, 2, 3]);
+      var result = source.filter(function(x) {  return x > 1  });
+      result.log();
+    },
+  },
+  {
+    title: 'timestamp',
+    it(Kefir) {
+      var source = Kefir.sequentially(100, [1, 2]);
+      var result = source.timestamp();
+      result.log();
+    },
+  }, {
+    title: 'not',
+    it(Kefir) {
+      var source = Kefir.sequentially(100, [true, false, true]);
+      var result = source.not();
+      result.log();
+    },
+  }, {
     title: 'invoke',
     it(Kefir) {
       var source = Kefir.sequentially(100, [
@@ -13,16 +84,14 @@ export default [
       var result = source.invoke('foo');
       result.log();
     },
-  },
-  {
+  }, {
     title: 'pluck',
     it(Kefir) {
       var source = Kefir.sequentially(100, [{num: 1}, {num: 2}, {num: 3}]);
       var result = source.pluck('num');
       result.log();
     },
-  },
-  {
+  }, {
     title: 'mapTo',
     it(Kefir) {
       var source = Kefir.sequentially(100, [1, 2, 3]);

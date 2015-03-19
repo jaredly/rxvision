@@ -49,19 +49,25 @@ export default function wrap(Kefir, tracer, streambag) {
     return res
   })
 
-  decorateWH('take', _ => fn => function () {
+  let passThrough = ['take', 'toProperty']
+
+  passThrough.forEach(name => decorateWH(name, _ => fn => function () {
     let res = fn.apply(this, arguments)
     if (this.__rxvision_id) {
       res.__rxvision_id = this.__rxvision_id
       if (streambag) streambag.add(res)
     }
     return res
-  })
+  }))
 
-  let wrapping = ['pluck', 'invoke', 'map', 'mapTo', 'selectBy', 'combine', 'merge', 'flatMap', 'flatMapLatest', 'flatMapConcat', 'flatMapFirst', 'flatMapConcurLimit']
-  let twoObs = ['filterBy']
+  /*
+  let oneSource = ['skip', 'skipWhile', 'skipDuplicates', 'takeWhile', 'filter', 'timestamp', 'not', 'pluck', 'invoke', 'map', 'mapTo', 'selectBy', 'combine', 'merge', 'flatMap', 'flatMapLatest', 'flatMapConcat', 'flatMapFirst', 'flatMapConcurLimit']
+  */
+  let twoSources = Object.keys(require('../tests/kefir/two-sources.json'))
 
-  wrapping.concat(twoObs).forEach(name => decorateWH(name, withHandler => fn => function () {
+  let oneSource = Object.keys(require('../tests/kefir/one-source.json'))
+
+  oneSource.concat(twoSources).forEach(name => decorateWH(name, withHandler => fn => function () {
     let previd = this.__rxvision_id
     if (!previd) return fn.apply(this, arguments)
     let stack = tracer.getStack() // are we in user code or rx code?
@@ -77,7 +83,7 @@ export default function wrap(Kefir, tracer, streambag) {
 
     let args = [].slice.call(arguments)
 
-    if (twoObs.indexOf(name) !== -1) {
+    if (twoSources.indexOf(name) !== -1) {
       let other = args[0]
       let isWrapped = !!other.__rxvision_id
       if (streambag) streambag.add(other)
@@ -152,6 +158,7 @@ export default function wrap(Kefir, tracer, streambag) {
     // bus: false,
     sequentially: false,
     repeatedly: false,
+    repeat: false,
     fromPoll: false,
     withInterval: false,
     fromCallback: false,
@@ -167,6 +174,18 @@ export default function wrap(Kefir, tracer, streambag) {
       }
     },
     later: false,
+  }
+
+  let modargs = {
+    repeat(args) {
+      let ofn = args[0]
+      args[0] = function () {
+        let res = ofn.apply(this, arguments)
+        // debugger
+        if (res) return mapit(sWH, res, this.__rxvision_id, 'recv')
+        return res
+      }
+    }
   }
 
   Object.keys(initializers).forEach(name => utils.decorate(Kefir, name, fn => function () {
@@ -186,7 +205,12 @@ export default function wrap(Kefir, tracer, streambag) {
       }
     }
     let sid = tracer.addStream(options)
-    let orig = fn.apply(this, arguments)
+    let args = [].slice.call(arguments)
+    if (modargs[name]) {
+      modargs[name](args)
+    }
+    let orig = fn.apply(this, args)
+    orig.__rxvision_id = sid
     let obs = mapit(sWH, orig, sid, 'send')
     /*
     let obs = sMap.call(

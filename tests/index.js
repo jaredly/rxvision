@@ -39,7 +39,15 @@ export default function run(tcase, outnode, timeout, done) {
     done()
   }
 
-  tcase.it(Kefir)
+  try {
+    tcase.it(Kefir)
+  } catch (e) {
+    tracer.running = false
+    clearTimeout(tid)
+    tid = null
+    streams.forEach(source => source._clear())
+    done(e)
+  }
   return tracer
 }
 

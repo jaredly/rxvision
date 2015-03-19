@@ -112,9 +112,17 @@ export default class Viz {
     let margin = this.config.margin
     let y = this.ysid(value.sid) + margin + 30
     x += this.config.leftBarWidth + margin + 10
-    let text = 'Value: ' + (this.isSanitized ? value : asString(value.value)).slice(0, 50) + '\n' +
-                (value.ts - this.veryStart)/1000 + 's\n'
-    this.tip.show(x, y, text)
+    let etype = value.etype || 'value'
+    let vtext
+    if (value.type === 'active') {
+      vtext = value.value ? 'activate' : 'deactivate'
+    } else if (etype == 'end') {
+      vtext = 'End'
+    } else {
+      vtext = etype + ': ' + (this.isSanitized ? value : asString(value.value)).slice(0, 50)
+    }
+    let time = (value.ts - this.veryStart)/1000
+    this.tip.show(x, y, `${vtext}\n${time}s`)
   }
 
   makeLeftBar(streams) {
@@ -231,6 +239,7 @@ export default class Viz {
 
         this.groups.streams.selectAll('.uid-' + d.uid + ',.from-' + d.uid).classed('active', true)
         this.groups.lines.selectAll('.uid-' + d.uid).classed('active', true)
+        if (!posMap[d.uid]) return
         let from = posMap[d.uid].from
         if (from && d.type !== 'recv') {
           this.groups.streams.selectAll('.uid-' + from).classed('active', true)
@@ -242,6 +251,7 @@ export default class Viz {
 
         this.groups.streams.selectAll('.uid-' + d.uid + ',.from-' + d.uid).classed('active', false)
         this.groups.lines.selectAll('.uid-' + d.uid).classed('active', false)
+        if (!posMap[d.uid]) return
         let from = posMap[d.uid].from
         if (from && d.type !== 'recv') {
           this.groups.streams.selectAll('.uid-' + from).classed('active', false)
@@ -253,6 +263,8 @@ export default class Viz {
       .attr('transform', d => `translate(${this.x(d.agroup, d.xpos)}, 0)`)
       .classed({
         'start': d => (!posMap[d.uid].from && d.type === 'send'),
+        'end-event': d => d.etype === 'end',
+        'error': d => d.etype === 'error',
         activate: d => d.type === 'active' && d.value,
         deactivate: d => d.type === 'active' && !d.value,
         // inactive: d => !d.active,
@@ -272,6 +284,7 @@ export default class Viz {
     dot.select('circle.front')
       .attr('r', d => {
         let pm = posMap[d.uid]
+        if (d.etype === 'end') return crad / 2
         if (stream.type === 'subscribe') return crad
         if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad
         if (d.type === 'recv' && !pm.to.length) return crad
@@ -281,6 +294,7 @@ export default class Viz {
     dot.select('circle.back')
       .attr('r', d => {
         let pm = posMap[d.uid]
+        if (d.etype === 'end') return crad
         if (stream.type === 'subscribe') return crad * 1.5
         if (d.type === 'send' && (!pm.from || !pm.ends.length)) return crad*1.5
         if (d.type === 'recv' && !pm.to.length) return crad*1.5

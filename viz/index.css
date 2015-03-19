@@ -2,6 +2,8 @@
 .rxvision {
   position: relative;
   max-width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .tip {
@@ -90,6 +92,12 @@ circle {
 }
 .dot.deactivate circle {
     fill: red;
+}
+.dot.end-event circle {
+  fill: #aaa;
+}
+.dot.error circle {
+  fill: #f00;
 }
 .backs rect {
   cursor: pointer;

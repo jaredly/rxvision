@@ -1,3 +1,9 @@
 /node_modules
 /build
 /pages
+tests/kefir/create.json
+tests/kefir/multiple-sources.json
+tests/kefir/one-source.json
+tests/kefir/two-sources.json
+/tests/kefir/compile.js
+*.swo

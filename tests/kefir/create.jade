@@ -1,0 +1,570 @@
+h2#create-stream Create a stream
+
+
++descr-method('emitter', 'emitter', 'Kefir.emitter()').
+  Creates an emitter, that is ordinary stream, but also has additional methods:
+  #[tt .emit(value)], #[tt .error(error)], #[tt .end()], and #[tt .emitEvent()].
+  The first three are pretty self-descriptive, and the last one accepts event object with same format
+  as in #[a(href='#on-any') onAny] method and emits the event.
+  Once an emitter was created, one can easily emit all three kind of events from it,
+  using these methods.
+
+pre(title='example').
+  var emitter = Kefir.emitter();
+  emitter.log(); // log events to console (see <a href="#log">log</a>)
+  emitter.emit(1);
+  emitter.error('Oops!');
+  emitter.end();
+
+pre(title='console output')
+  :escapehtml
+    > [emitter] <value> 1
+    > [emitter] <error> Oops!
+    > [emitter] <end>
+
+pre(title='events in time').
+  emitter:  ----1----e----X
+                     Oops!
+div
+
+p.
+  #[img(data-emoji="point_up")] #[b Emitter] is the easiest way
+  to create general purpose streams,
+  but it doesn't give you control over the #[a(href='#active-state') active state]
+  of the stream — it doesn't allows you to monitor if the stream has subscribers or not,
+  and sub/unsub to your original source or doing other resource management based on
+  that. If you want to have that control, you should use
+  #[a(href='#from-binder') fromBinder] or #[a(href='#from-sub-unsub') fromSubUnsub].
+
+
+
+
++descr-method('never', 'never', 'Kefir.never()').
+  Creates a stream, that already ended and will never produce any events.
+
+pre(title='example').
+  var stream = Kefir.never();
+  stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [never] <end:current>
+
+pre(title='events in time').
+  stream:  X
+div
+
+
+
+
++descr-method('later', 'later', 'Kefir.later(wait, value)').
+  Creates a stream, that produces a single #[b value]
+  after #[b wait] milliseconds, then ends.
+
+pre(title='example').
+  var stream = Kefir.later(1000, 1);
+  stream.log();
+
+pre(title='console output (after 1 second)')
+  :escapehtml
+    > [later] <value> 1
+    > [later] <end>
+
+pre(title='events in time').
+  stream:  ----1X
+div
+
+
+
+
++descr-method('interval', 'interval', 'Kefir.interval(interval, value)').
+  Creates a stream, that produces the same #[b value]
+  each #[b interval] milliseconds. Never ends.
+
+pre(title='example').
+  var stream = Kefir.interval(1000, 1);
+  stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [interval] <value> 1
+    > [interval] <value> 1
+    > [interval] <value> 1
+    ...
+
+pre(title='events in time').
+  stream:  ----1----1----1----1---
+div
+
+
++descr-method('sequentially', 'sequentially', 'Kefir.sequentially(interval, values)').
+  Creates a stream containing given #[b values] (array),
+  delivered with given #[b interval] in milliseconds.
+  Ends after all #[b values] are delivered.
+
+pre(title='example').
+  var stream = Kefir.sequentially(1000, [1, 2, 3]);
+  stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially] <value> 1
+    > [sequentially] <value> 2
+    > [sequentially] <value> 3
+    > [sequentially] <end>
+
+pre(title='events in time').
+  stream:  ----1----2----3X
+div
+
+
++descr-method('repeatedly', 'repeatedly', 'Kefir.repeatedly(interval, values)').
+  Creates a stream, that produces given #[b values] (array),
+  with given #[b interval] in milliseconds.
+  When all values emitted, it begins to produce them again from the start.
+  Never ends.
+
+pre(title='example').
+  var stream = Kefir.repeatedly(1000, [1, 2, 3]);
+  stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [repeatedly] <value> 1
+    > [repeatedly] <value> 2
+    > [repeatedly] <value> 3
+    > [repeatedly] <value> 1
+    > [repeatedly] <value> 2
+    > [repeatedly] <value> 3
+    > [repeatedly] <value> 1
+    ...
+
+pre(title='events in time').
+  stream:  ----1----2----3----1----2----3----1---
+div
+
+
++descr-method('from-poll', 'fromPoll', 'Kefir.fromPoll(interval, fn)').
+  Creates a stream, that polls given #[b fn] function,
+  with given #[b interval] in milliseconds,
+  and emits values returned by #[b fn].
+  Never ends.
+
+pre(title='example').
+  var start = new Date();
+  var stream = Kefir.fromPoll(1000, function(){ return new Date() - start });
+  stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [fromPoll] <value> 1001
+    > [fromPoll] <value> 2002
+    > [fromPoll] <value> 3004
+    > [fromPoll] <value> 4006
+    > [fromPoll] <value> 5007
+    > [fromPoll] <value> 6007
+    ...
+
+pre(title='events in time').
+  stream:  ----•----•----•----•---
+            1001 2002 3004 4006
+div
+
+
++descr-method('with-interval', 'withInterval', 'Kefir.withInterval(interval, handler)').
+  General method to create an interval based stream.
+  Creates a stream, that call given #[b handler] function,
+  with given #[b interval] in milliseconds.
+  The #[b handler] function is called with one argument —
+  #[a(href="#emitter-object") emitter object].
+
+pre(title='example')
+  :escapehtml
+    var start = new Date();
+    var stream = Kefir.withInterval(1000, function(emitter) {
+      var time = new Date() - start;
+      if (time < 4000) {
+        emitter.emit(time);   // emit a value
+      } else {
+        emitter.end();        // end the stream
+      }
+    });
+    stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [withInterval] <value> 1002
+    > [withInterval] <value> 2003
+    > [withInterval] <value> 3005
+    > [withInterval] <end>
+
+pre(title='events in time').
+  stream:  ----•----•----•----X
+            1002 2003 3005
+div
+
+p.
+  You may call #[b emitter] methods several times on each interval tick,
+  or not call them at all.
+
+
+
++descr-method('from-callback', 'fromCallback', 'Kefir.fromCallback(fn)').
+  Convert a function than accepts a #[b callback]
+  as the first argument to a stream.
+  Emits at most one value when #[b callback] is called then ends.
+  The #[b fn] function will be called at most once,
+  when first subscriber will be added to the stream.
+
+pre(title='example')
+  :escapehtml
+    var stream = Kefir.fromCallback(function(callback) {
+      // we use setTimeout here just to simulate some asynchronous activity
+      setTimeout(function() {  callback(1)  }, 1000);
+    });
+    stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [fromCallback] <value> 1
+    > [fromCallback] <end>
+
+pre(title='events in time').
+  stream:  ----1X
+div
+
+
+
++descr-method('from-node-callback', 'fromNodeCallback', 'Kefir.fromNodeCallback(fn)').
+  Similar to #[a(href='#from-callback') fromCallback],
+  but the #[b callback] passed to #[b fn]
+  is a node.js style callback — #[tt callback(error,&nbsp;result)].
+  If the #[b error] argument of the #[b callback] is truthy,
+  an error will be emitted from the result stream, in other case a value.
+  The stream will end after first value or error.
+
+pre(title='example')
+  :escapehtml
+    var stream = Kefir.fromNodeCallback(function(callback) {
+      // we use setTimeout here just to simulate some asynchronous activity
+      setTimeout(function() {  callback(null, 1)  }, 1000);
+    });
+    stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [fromNodeCallback] <value> 1
+    > [fromNodeCallback] <end>
+
+pre(title='events in time').
+  stream:  ----1X
+div
+
+
+
++descr-method('from-event', 'fromEvent', 'Kefir.fromEvent(target, eventName, [transform])').
+  Creates a stream from events on a DOM EventTarget or Node.JS EventEmitter
+  object, or an object that supports event listeners using #[tt on/off] methods (e.g. jQuery object).
+
+p.
+  If #[b transform] function provided, it will be called on each event
+  with same arguments and context (#[tt this]) as the event listener callback.
+  And the value returned by #[b transform] will be emitted from stream.
+  If no #[b transform] function provided, first argument of callback is emitted by default,
+  i.e. #[tt function(x) {return x}] used as #[b transform].
+
+pre(title='example')
+  :escapehtml
+    var stream = Kefir.fromEvent(document.body, 'click');
+    stream.log()
+
+pre(title='console output')
+  :escapehtml
+    > [fromEvent] <value> MouseEvent {dataTransfer: null, y: 474, x: 551 ...}
+    > [fromEvent] <value> MouseEvent {dataTransfer: null, y: 361, x: 751 ...}
+    > [fromEvent] <value> MouseEvent {dataTransfer: null, y: 444, x: 1120 ...}
+
+pre(title='events in time').
+  stream:  ----•-----------•----•---
+      MouseEvent   MouseEvent   MouseEvent
+div
+
+p.
+  Note that it uses #[tt addEventListener()] for DOM events,
+  which is not supported by IE8. If you need IE8 support use
+  <a href="#jquery">jQuery plugin</a> or call #[b fromEvent]
+  on a jQuery object, e.g. #[tt Kefir.fromEvent($('.foo'), 'click')].
+
+
+
++descr-method('from-sub-unsub', 'fromSubUnsub', 'Kefir.fromSubUnsub(subscribe, unsubscribe, [transform])').
+  Creates a stream from #[b subscribe] and #[b unsubscribe] functions.
+  The #[b subscribe] function is called on each #[a(href='#active-state') activation] with callback as argument,
+  giving you an opportunity to subscribe with this callback to an original source of values.
+  When all subscribers from the stream removed, the #[b unsubscribe] function is called
+  with the same callback, so you can unsubscribe from your original source.
+
+p.
+  You can also provide an #[b transform] function, which will work the same way as in
+  #[a(href='#from-event') fromEvent].
+
+pre(title='example')
+  :escapehtml
+    function subscribe(callback) {
+      document.body.addEventListener('click', callback);
+    }
+
+    function unsubscribe(callback) {
+      document.body.removeEventListener('click', callback);
+    }
+
+    function transform(event) {
+      return event.type + ' on ' + this.tagName;
+    }
+
+    var stream = Kefir.fromSubUnsub(subscribe, unsubscribe, transform);
+    stream.log();
+
+pre(title='console output')
+  :escapehtml
+    > [fromBinder] <value> click on BODY
+    > [fromBinder] <value> click on BODY
+    > [fromBinder] <value> click on BODY
+
+pre(title='events in time').
+  stream:  ----•--------------•----•---
+    'click on...'  'click on...'  'click on...'
+div
+
+
+
+
+
++descr-method('from-binder', 'fromBinder', 'Kefir.fromBinder(subscribe)').
+  Another method for creation general purpose stream,
+  along with <a href="#emitter">emitter</a>.
+  Unlike #[b emitter] it gives you control over
+  <a href="#active-state">active state</a> of the stream.
+
+p.
+  Creates a stream which call #[b subscribe] function on each
+  #[a(href="#active-state") activation], passing to it an
+  #[a(href="#emitter-object") emitter object].
+  Then you can call #[b emitter] methods at any time to emit events.
+  You can also return an #[b unsubscribe] function from the #[b subscribe] function.
+  If a function is returned from #[b subscribe], it will be called on #[b deactivation] of the stream.
+
+pre(title='example')
+  :escapehtml
+    var stream = Kefir.fromBinder(function(emitter) {
+      console.log('!activation');
+      var i = 0;
+      var intervalId = setInterval(function() {
+        emitter.emit(++i);
+      }, 1000);
+      return function() {
+        console.log('!deactivation');
+        clearInterval(intervalId);
+      }
+    });
+    stream.log();
+    setTimeout(function() {
+      stream.offLog(); // turn off logging to deactivate stream
+    }, 3500);
+
+pre(title='console output')
+  :escapehtml
+    > !activation
+    > [fromBinder] <value> 1
+    > [fromBinder] <value> 2
+    > [fromBinder] <value> 3
+    > !deactivation
+
+pre(title='events in time').
+  stream:  ----1----2----3---
+div
+
+p.
+  See also <a href="demos/custom-stream.html">Custom stream demo</a>
+  as another #[b fromBinder] usage example.
+
+p.
+  #[img(data-emoji="point_up")] Note that if you call #[b emitter] methods
+  synchronously in #[b subscribe] function, the callback passed to #[b on*] methods
+  (#[b onValue] etc.) will be also called synchronously.
+  And only first subscriber will get values emitted synchronously
+  (but if you convert stream to a property, this value will became property
+  current value, and all subscribers will get it).
+
+pre(title='example')
+  :escapehtml
+    var stream = Kefir.fromBinder(function(emitter) {
+      emitter.emit(1); // synchronous call
+      setTimeout(function() {emitter.emit(2)}, 0); // asynchronous call
+    });
+    console.log('about to add first subscriber');
+    stream.onValue(function(x) {console.log('first:', x)});
+    console.log('first subscriber added');
+    stream.onValue(function(x) {console.log('second:', x)});
+    console.log('second subscriber added');
+
+pre(title='console output')
+  :escapehtml
+    > about to add first subscriber
+    > first: 1
+    > first subscriber added
+    > second subscriber added
+    > first: 2
+    > second: 2
+div
+
+
+
+
++descr-method('repeat', 'repeat', 'Kefir.repeat(generator)').
+  Calls #[b generator] function which supposed to return an observable.
+  Emits values and errors from spawned observable, when it ends
+  calls #[b generator] again to get new one and so on.
+
+p.
+  The #[b generator] function is called with one argument — iteration number
+  starting from #[tt 0]. If a falsy value returned
+  from #[b generator] the stream ends.
+
+pre(title='example')
+  :escapehtml
+    var result = Kefir.repeat(function(i) {
+      if (i < 3) {
+        return Kefir.sequentially(100, [i, i]);
+      } else {
+        return false;
+      }
+    });
+    result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [repeat] <value> 0
+    > [repeat] <value> 0
+    > [repeat] <value> 1
+    > [repeat] <value> 1
+    > [repeat] <value> 2
+    > [repeat] <value> 2
+    > [repeat] <end>
+
+pre(title='events in time').
+  spawned 1:  ---0---0X
+  spawned 2:          ---1---1X
+  spawned 3:                  ---2---2X
+
+  result:     ---0---0---1---1---2---2X
+div
+
+p.
+  #[img(data-emoji="point_up")] Note that with this method
+  it's possible to create an infinite loop. Consider this example:
+
+pre(title='example')
+  :escapehtml
+    var result = Kefir.repeat(function() {
+      return Kefir.constant(1);
+    });
+
+    // When we subscribe to it (directly or via .log)
+    // we already in infinite loop.
+    result.log();
+
+    // But if we limit it with .take or something it'll work just fine.
+    // So the `result` stream defined like this
+    // still may make sense depend on how we use it.
+    result.take(10).log();
+
+p.
+  It's even more dangerous if #[b generator] constantly returns ended observable
+  with no values (e.g. #[a(href='#never') never]).
+  In this case #[tt .take] won't help, because you'll never get any single
+  value from it, but #[b generator] will be called over and over.
+  The only escape path here is to define an escape condition it the
+  #[b generator]:
+
+pre(title='example')
+  :escapehtml
+    var result = Kefir.repeat(function(i) {
+
+      // Defining that a new observable will be spawned at most 10 times
+      if (i >= 10) {
+        return false;
+      }
+
+      return Kefir.never();
+    });
+
+p.
+  So just be careful when using #[b repeat],
+  it's a little dangerous but still a great method.
+
+
+
+h2#create-property Create a property
+
+
+
++descr-method('constant', 'constant', 'Kefir.constant(value)').
+  Creates an ended property, with specified #[b current value].
+
+pre(title='example').
+  var property = Kefir.constant(1);
+  property.log();
+
+pre(title='console output')
+  :escapehtml
+    > [constant] <value:current> 1
+    > [constant] <end:current>
+
+pre(title='events in time').
+  property: 1X
+div
+
+
+
++descr-method('constant-error', 'constantError', 'Kefir.constantError(error)').
+  Creates an ended property, with specified #[b current error].
+
+pre(title='example').
+  var property = Kefir.constantError(1);
+  property.log();
+
+pre(title='console output')
+  :escapehtml
+    > [constantError] <error:current> 1
+    > [constantError] <end:current>
+
+pre(title='events in time').
+  property: eX
+div
+
+
+
++descr-method('from-promise', 'fromPromise', 'Kefir.fromPromise(promise)').
+  Converts a promise to a property.
+
+pre(title='example')
+  :escapehtml
+    var myPromise = {
+      then: function(onSuccess, onError) {
+        var fulfill = function() {  onSuccess(1)  };
+        setTimeout(fulfill, 1000);
+      }
+    };
+
+    var result = Kefir.fromPromise(myPromise);
+    result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [fromPromise] <value> 1
+    > [fromPromise] <end>
+
+pre(title='events in time').
+  result:  ----1X
+div

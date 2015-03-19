@@ -5,7 +5,7 @@ import tests from '../tests/kefir'
 
 function fnBody(fn) {
   let text = fn + ''
-  return text.split('\n').slice(1, -1).join('\n')
+  return text.split('\n').slice(2, -1).join('\n')
 }
 
 if (window.location.search.length > 1) {
@@ -16,13 +16,54 @@ window.tracers = {}
 
 let TestCase = React.createClass({
   getInitialState() {
-    return {done: false, timeout: null}
+    return {
+      status: 'unstarted',
+      timeout: null
+    }
   },
   componentDidMount() {
-    let tracer = run(this.props.tcase, this.refs.viz.getDOMNode(), 1000, timeout => {
-      this.setState({done: true, timeout: timeout})
+    if (!this.checkVisible()) {
+      window.addEventListener('scroll', this.handleScroll)
+    }
+  },
+  handleScroll(e) {
+    if (this.checkVisible()) {
+      window.removeEventListener('scroll', this.handleScroll)
+    }
+  },
+  checkVisible() {
+    if (this.state.status !== 'unstarted') return
+    let node = this.refs.viz.getDOMNode()
+    let top = node.getBoundingClientRect().top
+
+    if (top > 0 && top < window.innerHeight) {
+      window.removeEventListener('scroll', this.handleScroll)
+      this.run()
+      return true
+    }
+    return false
+  },
+  run() {
+    if (this.state.status === 'running') return console.warn('already running')
+    this.setState({status: 'running'}, _ => {
+      let node = this.refs.viz.getDOMNode()
+      ;[].forEach.call(node.childNodes, n => node.removeChild(n))
+      setTimeout(_ => {
+        let tracer = run(this.props.tcase, node, 5000, error => {
+          this.setState({
+            status: error === true ? 'timeout' : (error ? 'error' : 'done'),
+            error: error,
+          })
+        })
+        window.tracers[this.props.tcase.title] = tracer
+      }, 100)
     })
-    window.tracers[this.props.tcase.title] = tracer
+  },
+  renderStatus() {
+    if (this.state.status === 'error') {
+      return 'Error! ' + this.state.error.message
+    }
+    return this.state.status
   },
   render() {
     return <div>
@@ -30,10 +71,10 @@ let TestCase = React.createClass({
       <pre>{fnBody(this.props.tcase.it)}</pre>
       <div ref="viz" className="TestViz"/>
       <div className='TestStatus'>
-        {this.state.done ?
-          (this.state.timeout ? 'Timeout' : 'Done')
-            : 'Running'}
+        {this.renderStatus()}
+        {this.state.status !== 'running' && <button onClick={this.run}>Run</button>}
       </div>
+      <pre>{this.props.tcase.events}</pre>
     </div>
   }
 })

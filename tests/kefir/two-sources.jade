@@ -1,0 +1,283 @@
+h2#combine-two Combine two observables
+
+p.
+  Just like in <a href="#modify">"Modify an observable"</a> section,
+  most of methods in this section return observables of same type as an original
+  observable (on which method was called).
+
+
+
++descr-method('filter-by', 'filterBy', 'obs.filterBy(otherObs)').
+  Works like <a href="#filter">filter</a>, but instead of calling a predicate
+  on each value from #[b obs] observable, it checks last value from #[b otherObs].
+
+pre(title='example').
+  var foo = Kefir.sequentially(100, [1, 2, 3, 4, 5, 6, 7, 8]);
+  var bar = Kefir.sequentially(200, [false, true, false]).delay(40).toProperty(true);
+  var result = foo.filterBy(bar);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.filterBy] <value> 1
+    > [sequentially.filterBy] <value> 2
+    > [sequentially.filterBy] <value> 5
+    > [sequentially.filterBy] <value> 6
+    > [sequentially.filterBy] <end>
+
+pre(title='events in time').
+  foo:     ----1----2----3----4----5----6----7----8X
+  bar:    t-----------f---------t---------fX
+
+  result:  ----1----2--------------5----6----------X
+div
+
+
+
+
++descr-method('obs-sampled-by', 'sampledBy', 'obs.sampledBy(otherObs, [combinator])').
+  Returns a stream that emits latest value from #[b obs] observable
+  on each value from #[b otherObs]. Ends when #[b otherObs] ends.
+
+p.
+  You can also provide
+  #[b combinator] function which will be used to form the value emited
+  by result stream. It is called with latest values
+  from #[b obs] and #[b otherObs] as argumets. The default #[b combinator]
+  function is #[tt function(a,&nbsp;b)&nbsp;{return&nbsp;a}].
+
+pre(title='example').
+  var a = Kefir.sequentially(200, [2, 3]).toProperty(1);
+  var b = Kefir.interval(100, 0).delay(40).take(5);
+  var result = a.sampledBy(b);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.toProperty.sampledBy] <value> 1
+    > [sequentially.toProperty.sampledBy] <value> 2
+    > [sequentially.toProperty.sampledBy] <value> 2
+    > [sequentially.toProperty.sampledBy] <value> 3
+    > [sequentially.toProperty.sampledBy] <value> 3
+    > [sequentially.toProperty.sampledBy] <end>
+
+pre(title='events in time').
+  a:      1---------2---------3X
+  b:       ------0----0----0----0----0X
+
+  result:  ------1----2----2----3----3X
+div
+
+
+
++descr-method('take-while-by', 'takeWhileBy', 'obs.takeWhileBy(otherObs)').
+  Works like <a href="#take-while">takeWhile</a>, but instead of using a
+  predicate function it uses another observable. It takes values from
+  #[b obs] observable until the first falsey value from #[b otherObs].
+
+p.
+  <img data-emoji="point_up"> Note that it will not produce any value until
+  first value from #[b otherObs], if that not what you need, just turn your
+  stream into property with current value #[tt true]
+  by calling #[tt .toProperty(true)].
+
+pre(title='example').
+  var foo = Kefir.sequentially(100, [1, 2, 3, 4, 5, 6, 7, 8]);
+  var bar = Kefir.sequentially(200, [true, false, true]).delay(40).toProperty(true);
+  var result = foo.takeWhileBy(bar);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.takeWhileBy] <value> 1
+    > [sequentially.takeWhileBy] <value> 2
+    > [sequentially.takeWhileBy] <value> 3
+    > [sequentially.takeWhileBy] <value> 4
+    > [sequentially.takeWhileBy] <end>
+
+pre(title='events in time').
+  foo:     ----1----2----3----4----5----6----7----8X
+  bar:     t----------t---------f---------tX
+
+  result:  ----1----2----3----4-X
+div
+
+
+
+
++descr-method('skip-while-by', 'skipWhileBy', 'obs.skipWhileBy(otherObs)').
+  Works like <a href="#skip-while">skipWhile</a>, but instead of using a
+  predicate function it uses another observable. It skips values from
+  #[b obs] observable until first falsey value from #[b otherObs].
+
+pre(title='example').
+  var foo = Kefir.sequentially(100, [1, 2, 3, 4, 5, 6, 7, 8]);
+  var bar = Kefir.sequentially(200, [true, false, true]).delay(40);
+  var result = foo.skipWhileBy(bar);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.skipWhileBy] <value> 1
+    > [sequentially.skipWhileBy] <value> 2
+    > [sequentially.skipWhileBy] <value> 3
+    > [sequentially.skipWhileBy] <value> 4
+    > [sequentially.skipWhileBy] <end>
+
+pre(title='events in time').
+  foo:     ----1----2----3----4----5----6----7----8X
+  bar:     -----------t---------f---------tX
+
+  result:  ------------------------5----6----7----8X
+div
+
+
+
++descr-method('skip-until-by', 'skipUntilBy', 'obs.skipUntilBy(otherObs)').
+  Similar to <a href="#skip-while-by">skipWhileBy</a>, but instead of
+  waiting for first falsey value from #[b otherObs], it waits for just any value from it.
+
+pre(title='example').
+  var foo = Kefir.sequentially(100, [1, 2, 3, 4]);
+  var bar = Kefir.later(250, 0);
+  var result = foo.skipUntilBy(bar);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.skipUntilBy] <value> 3
+    > [sequentially.skipUntilBy] <value> 4
+    > [sequentially.skipUntilBy] <end>
+
+pre(title='events in time').
+  foo:     ----1----2----3----4X
+  bar:     -----------0X
+
+  result:  --------------3----4X
+div
+
+
+
+
++descr-method('take-until-by', 'takeUntilBy', 'obs.takeUntilBy(otherObs)').
+  Similar to <a href="#take-while-by">takeWhileBy</a>, but instead of
+  waiting for first falsey value from #[b otherObs], it waits for just any value from it.
+
+pre(title='example').
+  var foo = Kefir.sequentially(100, [1, 2, 3, 4]);
+  var bar = Kefir.later(250, 0);
+  var result = foo.takeUntilBy(bar);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.takeUntilBy] <value> 1
+    > [sequentially.takeUntilBy] <value> 2
+    > [sequentially.takeUntilBy] <end>
+
+pre(title='events in time').
+  foo:     ----1----2----3----4X
+  bar:     -----------0X
+
+  result:  ----1----2-X
+div
+
+
+
+
++descr-method('buffer-by', 'bufferBy', 'obs.bufferBy(otherObs, [options])').
+  Buffers all values from #[b obs] observable,
+  and flushes the buffer on each value from #[b otherObs].
+  Also flushes the buffer before end, but you can disable that
+  by passing #[tt {flushOnEnd: false}] as #[b options].
+
+pre(title='example').
+  var foo = Kefir.sequentially(100, [1, 2, 3, 4, 5, 6, 7, 8]).delay(40);
+  var bar = Kefir.sequentially(300, [1, 2])
+  var result = foo.bufferBy(bar);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.delay.bufferBy] <value> [1, 2]
+    > [sequentially.delay.bufferBy] <value> [3, 4, 5]
+    > [sequentially.delay.bufferBy] <value> [6, 7, 8]
+    > [sequentially.delay.bufferBy] <end>
+
+pre(title='events in time').
+  foo:     ------1----2----3----4----5----6----7----8 X
+  bar:     --------------1--------------2X
+
+  result:  --------------•--------------•------------•X
+                    [1, 2]      [3, 4, 5]    [6, 7, 8]
+div
+
+
+
+
+
++descr-method('buffer-while-by', 'bufferWhileBy', 'obs.bufferWhileBy(otherObs, [options])').
+  Similar to #[a(href="#buffer-while") bufferWhile], but instead of using a
+  predicate function it uses another observable.
+  On each value from #[b obs] observable:
+  if last value from #[b otherObs] was truthy, adds new value to the buffer,
+  otherwise flushes the buffer (with new value included).
+  Also flushes the buffer before end, but you can disable that
+  by passing #[tt {flushOnEnd: false}] as #[b options].
+
+
+pre(title='example').
+  var foo = Kefir.sequentially(100, [1, 2, 3, 4, 5, 6, 7, 8]);
+  var bar = Kefir.sequentially(200, [false, true, false]).delay(40);
+  var result = foo.bufferWhileBy(bar);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.bufferWhileBy] <value> [1, 2, 3]
+    > [sequentially.bufferWhileBy] <value> [4]
+    > [sequentially.bufferWhileBy] <value> [5, 6, 7]
+    > [sequentially.bufferWhileBy] <value> [8]
+    > [sequentially.bufferWhileBy] <end>
+
+pre(title='events in time').
+  foo:     ----1----2----3----4----5----6----7----8X
+  bar:     -----------f---------t---------fX
+
+  result:  --------------•----•--------------•----•X
+                 [1, 2, 3]  [4]      [5, 6, 7]  [8]
+div
+
+
+
+
+
++descr-method('awaiting', 'awaiting', 'obs.awaiting(otherObs)').
+  Returns a property that represents the awaiting status of two observables,
+  i.e. answers the question «Has #[b obs] observable emitted a value
+  since the last value from #[b otherObs] observable has been emitted?».
+
+pre(title='example').
+  var foo = Kefir.sequentially(100, [1, 2, 3]);
+  var bar = Kefir.sequentially(100, [1, 2, 3]).delay(40);
+  var result = foo.awaiting(bar);
+  result.log();
+
+pre(title='console output')
+  :escapehtml
+    > [sequentially.awaiting] <value:current> false
+    > [sequentially.awaiting] <value> true
+    > [sequentially.awaiting] <value> false
+    > [sequentially.awaiting] <value> true
+    > [sequentially.awaiting] <value> false
+    > [sequentially.awaiting] <value> true
+    > [sequentially.awaiting] <value> false
+    > [sequentially.awaiting] <end>
+
+pre(title='events in time').
+  foo:     ----1----2----3X
+  bar:     ------1----2----3X
+
+  result:  f---t-f--t-f--t-fX
+div
+

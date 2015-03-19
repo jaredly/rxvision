@@ -13,13 +13,13 @@ function getPosMap(streams) {
           xpos: value.xpos,
           async: value.async,
           agroup: value.agroup,
-          from: from,
+          from: value.type !== 'active' && value.etype !== 'end' && from,
           toAsync: posMap[value.uid] ? posMap[value.uid].toAsync : false,
           to: posMap[value.uid] ? posMap[value.uid].to : [],
           sourced: true,
           ends: posMap[value.uid] ? posMap[value.uid].ends : []
         }
-        if (posMap[from]) {
+        if (posMap[from] && value.type !== 'active') {
           posMap[from].to.push(value.uid)
           if (value.async || value.agroup !== posMap[from].agroup || value.xpos !== posMap[from].xpos) {
             posMap[from].toAsync = true
@@ -29,7 +29,7 @@ function getPosMap(streams) {
         if (!posMap[value.uid]) {
           posMap[value.uid] = {ends: [], to: [], sourced: false}
         }
-        from = value.uid
+        if (value.etype !== 'end') from = value.uid
         posMap[value.uid].ends.push({
           sid: value.sid,
           xpos: value.xpos,
