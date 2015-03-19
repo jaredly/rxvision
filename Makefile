@@ -5,6 +5,11 @@ build:
 watch:
 	webpack --watch
 
+pages:
+	rsync build examples vendor pages -r
+
+.PHONY: build watch pages
+
 # this stuff is Deprecated for now. Just leaving it in
 # for the moment in case I forgot anything in the transfew to webpack.
 # 

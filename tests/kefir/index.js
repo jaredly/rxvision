@@ -7,7 +7,7 @@ import multSources from './multiple-sources.json'
 import create from './create.json'
 
 let sources = [oneSource, twoSources, multSources, create]
-sources = [twoSources]
+sources = [oneSource, twoSources, create]
 
 let cases = sources.map(examples => Object.keys(examples).map(name => {
   return {
