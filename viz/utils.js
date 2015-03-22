@@ -74,13 +74,15 @@ function getDataLines(posMap, x, ysid) {
   let dataLines = []
   Object.keys(posMap).forEach(uid => {
     let {ends, agroup, xpos, sid} = posMap[uid]
+    if (!agroup) return // not a completed line.
+    let fromx = x(agroup, xpos)
     ends.forEach(dest => {
       dataLines.push({
         id: uid,
         uid,
         from: {
           y: ysid(sid),
-          x: x(agroup, xpos),
+          x: fromx,
         },
         to: {
           y: ysid(dest.sid),

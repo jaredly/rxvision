@@ -29,14 +29,14 @@ export default function run(tcase, outnode, timeout, done) {
     tracer.running = false
     tid = null
     streams.forEach(source => source._clear())
-    done(true)
+    done(true, tracer.logs())
   }, timeout)
 
   tracer.config.onDeactivate = _ => {
     if (!tid) return
     clearTimeout(tid)
     tid = null
-    done()
+    done(null, tracer.logs())
   }
 
   try {
@@ -46,7 +46,7 @@ export default function run(tcase, outnode, timeout, done) {
     clearTimeout(tid)
     tid = null
     streams.forEach(source => source._clear())
-    done(e)
+    done(e, tracer.logs())
   }
   return tracer
 }

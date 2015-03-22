@@ -89,6 +89,8 @@ export default function wrap(Kefir, tracer, streambag) {
 
   let multSources = Object.keys(require('../tests/kefir/multiple-sources.json'))
 
+  let multTwoAlias = ['combine', 'and', 'or', 'zip', 'merge', 'concat']
+
   oneSource.concat(twoSources).concat(multSources).forEach(name => decorateWH(name, withHandler => fn => function () {
     let previd = this.__rxvision_id
     if (!previd) return fn.apply(this, arguments)
@@ -105,7 +107,7 @@ export default function wrap(Kefir, tracer, streambag) {
 
     let args = [].slice.call(arguments)
 
-    if (twoSources.indexOf(name) !== -1) {
+    if (twoSources.indexOf(name) !== -1 || multTwoAlias.indexOf(name) !== -1) {
       let other = args[0]
       let isWrapped = !!other.__rxvision_id
       if (streambag) streambag.add(other)
@@ -124,7 +126,7 @@ export default function wrap(Kefir, tracer, streambag) {
       args[0] = mapit(withHandler, other, sid, isWrapped ? 'recv' : 'pass')
     }
 
-    let flatting = multSources.indexOf(name) !== -1
+    let flatting = name.indexOf('flatMap') === 0
 
     if (flatting) {
       let mapper = args[0]
@@ -145,7 +147,7 @@ export default function wrap(Kefir, tracer, streambag) {
 
     let interm
 
-    if (multSources.indexOf(name) !== -1 && !flatting) {
+    if (name.indexOf('flatMap') === 0 && !flatting) {
       interm = fn.apply(
         maptrace(withHandler, this, sid),
         args

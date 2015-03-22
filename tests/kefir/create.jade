@@ -472,7 +472,7 @@ pre(title='example')
 
     // When we subscribe to it (directly or via .log)
     // we already in infinite loop.
-    result.log();
+    // result.log();
 
     // But if we limit it with .take or something it'll work just fine.
     // So the `result` stream defined like this
@@ -498,6 +498,8 @@ pre(title='example')
 
       return Kefir.never();
     });
+
+    result.log()
 
 p.
   So just be careful when using #[b repeat],
