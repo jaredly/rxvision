@@ -2,6 +2,45 @@
 body {
     max-width: 1000px;
     margin: 50px auto;
+    font-family: sans-serif;
+}
+
+header {
+    text-align: center;
+}
+
+.TestCase {
+    margin-bottom: 10px;
+    border-bottom: 2px solid #ccc;
+}
+
+.TestCase_title {
+  text-decoration: none;
+  color: #05f;
+  font-size: 1.5em;
+}
+
+.logs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.logs li {
+  display: inline-block;
+  margin: 3px;
+}
+
+.logs .error {
+  color: #f00;
+}
+
+.logs .value {
+  color: #030;
+}
+
+.logs .end {
+  color: #555;
 }
 
 
