@@ -10,9 +10,7 @@ function fnBody(fn) {
   return text.split('\n').slice(2, -1).join('\n')
 }
 
-function toStringable(s) {
-  if (s.type === 'value') s = s.value
-  else if (s.type === 'end') return '*end*'
+function safeString(s) {
   try {
     return JSON.stringify(s)
   } catch (e) {}
@@ -22,25 +20,42 @@ function toStringable(s) {
   return 'Not viewable'
 }
 
+function toStringable(s) {
+  if (s.type === 'value') return <span className='value'>{safeString(s.value)}</span>
+  else if (s.type === 'end') return <span className='end'>&times;</span>
+  else if (s.type === 'error') return <span className='error'>{safeString(s.value)}</span>
+  return 'unknown evt type'
+}
 
 function showLogs(logs) {
-  return '[' + logs.map(toStringable).join(', ') + ']'
+  return <ul className='logs'>
+    {logs.map(v => <li>{toStringable(v)}</li>)}
+  </ul>
 }
 
 function checkLogs(logs, correct) {
   let ovals = logs.map(evt => ({type: evt.etype, value: evt.value}))
-  let err = ''
+  if (!correct) return <span>Values: {showLogs(ovals)}</span>
+  let err = []
   if (logs.length !== correct.length) {
-    err += `Different number of events: ${logs.length} expected ${correct.length}\n`
+    err.push(<li>Different number of events: ${logs.length} expected ${correct.length}</li>)
   } else {
     for (let i=0; i<ovals.length; i++) {
       if (!deepEqual(correct[i], ovals[i])) {
-        err += 'Expected (' + i + ') ' + toStringable(ovals[i]) + ' to be ' + toStringable(correct[i]) + '\n'
+        err.push(
+          <span>
+            Expected ({i}) {toStringable(ovals[i])} to be {toStringable(correct[i])}
+          </span>
+        )
       }
     }
   }
-  if (!err.length) return 'Passed! ' + showLogs(correct)
-  return err + '\nGot: ' + showLogs(ovals) + '\nExpected: ' + showLogs(correct)
+  if (!err.length) return <span>Passed! {showLogs(correct)}</span>
+  return <div>
+    <ul>{err}</ul>
+    <div>Got: {showLogs(ovals)}</div>
+    <div>Expected: {showLogs(correct)}</div>
+  </div>
 }
 
 if (window.location.search.length > 1) {
@@ -103,8 +118,8 @@ let TestCase = React.createClass({
     return this.state.status
   },
   render() {
-    return <div>
-      <h4><a href={'?' + this.props.tcase.title}>{this.props.tcase.title}</a></h4>
+    return <div className='TestCase'>
+      <h4><a className='TestCase_title' href={'?' + this.props.tcase.title}>{this.props.tcase.title}</a></h4>
       <pre>{fnBody(this.props.tcase.it)}</pre>
       <div ref="viz" className="TestViz"/>
       <div className='TestStatus'>
@@ -118,6 +133,7 @@ let TestCase = React.createClass({
 })
 
 let parent = document.createElement('div')
+parent.id = 'tests'
 document.body.appendChild(parent)
 
 React.render(

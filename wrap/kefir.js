@@ -273,7 +273,7 @@ export default function wrap(Kefir, tracer, streambag) {
     return em
   })
 
-  let multiCreate = ['and', 'or', 'zip', 'merge', 'concat']
+  let multiCreate = ['and', 'or', 'zip', 'merge', 'concat', 'combine']
 
   multiCreate.forEach(name => utils.decorate(Kefir, name, fn => function (obs) {
     let stack = tracer.getStack()
@@ -289,6 +289,11 @@ export default function wrap(Kefir, tracer, streambag) {
 
     let args = [].slice.call(arguments)
     args[0] = args[0].map(obs => mapit(sWH, obs, sid, 'recv'))
+
+    if (name === 'combine' && Array.isArray(args[1])) {
+      args[1] = args[1].map(obs => mapit(sWH, obs, sid, 'recv'))
+    }
+
     // TODO transform args
     let res = mapit(sWH, fn.apply(this, args), sid, 'send')
     res.__rxvision_id = sid;
