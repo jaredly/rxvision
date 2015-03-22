@@ -7,7 +7,8 @@ import multSources from './multiple-sources.json'
 import create from './create.json'
 
 let sources = [oneSource, twoSources, multSources, create]
-sources = [oneSource, twoSources, create]
+sources = [multSources]
+// sources = [oneSource, twoSources, create]
 
 let cases = sources.map(examples => Object.keys(examples).map(name => {
   return {
@@ -16,6 +17,16 @@ let cases = sources.map(examples => Object.keys(examples).map(name => {
     events: examples[name][0].events,
   }
 })).reduce((ful, one) => ful.concat(one))
+
+cases.push({
+  title: 'flatMapFn',
+  it(Kefir) {
+
+    var source = Kefir.sequentially(100, [1, 2, 3]);
+    var obss = source.map(x => Kefir.interval(40, x).take(4))
+    obss.flatMap().log()
+  }
+})
 
 export default cases
 

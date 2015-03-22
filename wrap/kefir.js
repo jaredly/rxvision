@@ -31,11 +31,31 @@ export default function wrap(Kefir, tracer, streambag) {
   }
 
   function mapit(withHandler, obs, sid, type) {
+    if ('function' !== typeof obs.withHandler) {
+      throw new Error("Trynig to wrap something that's not an observable")
+    }
     return withHandler.call(obs, (emitter, evt) => {
       if (evt.type === 'value' || evt.type === 'error') {
         evt.value = tracer.trace(sid, type, null, evt.value, evt.type)
       } else {
         evt.value = tracer.trace(sid, type, null, null, evt.type)
+      }
+      emitter.emitEvent(evt)
+    })
+  }
+
+  function maptrace(withHandler, obs, sid) {
+    if ('function' !== typeof obs.withHandler) {
+      throw new Error("Trynig to wrap something that's not an observable")
+    }
+    return withHandler.call(obs, (emitter, evt) => {
+      if (evt.type === 'value' || evt.type === 'error') {
+        evt.value = tracer.trace(sid, 'recv', null, evt.value, evt.type)
+        if (evt.type === 'value') {
+          evt.value = mapit(withHandler, evt.value, sid, 'recv')
+        }
+      } else {
+        evt.value = tracer.trace(sid, 'recv', null, null, evt.type)
       }
       emitter.emitEvent(evt)
     })
@@ -67,7 +87,9 @@ export default function wrap(Kefir, tracer, streambag) {
 
   let oneSource = Object.keys(require('../tests/kefir/one-source.json'))
 
-  oneSource.concat(twoSources).forEach(name => decorateWH(name, withHandler => fn => function () {
+  let multSources = Object.keys(require('../tests/kefir/multiple-sources.json'))
+
+  oneSource.concat(twoSources).concat(multSources).forEach(name => decorateWH(name, withHandler => fn => function () {
     let previd = this.__rxvision_id
     if (!previd) return fn.apply(this, arguments)
     let stack = tracer.getStack() // are we in user code or rx code?
@@ -100,42 +122,48 @@ export default function wrap(Kefir, tracer, streambag) {
       })
 
       args[0] = mapit(withHandler, other, sid, isWrapped ? 'recv' : 'pass')
-      // args[0] = map.call(other, tracer.traceMap(sid, isWrapped ? 'recv' : 'pass'))
     }
 
-    if (name.indexOf('flatMap') === 0) {
+    let flatting = multSources.indexOf(name) !== -1
+
+    if (flatting) {
       let mapper = args[0]
-      args[0] = function () {
-        let full = arguments[0]
-        arguments[0] = arguments[0].value
-        let childObs = mapper.apply(this, arguments)
-        if (childObs.__rxvision_id) {
-          tracer.trace(childObs.__rxvision_id, 'recv', full)
+      if (typeof args[0] === 'function') {
+        args[0] = function () {
+          let full = arguments[0]
+          arguments[0] = arguments[0].value
+          let childObs = mapper.apply(this, arguments)
+          if (childObs.__rxvision_id) {
+            tracer.trace(childObs.__rxvision_id, 'recv', full)
+          }
+          return mapit(withHandler, childObs, sid, 'recv')
         }
-        return mapit(withHandler, childObs, sid, 'recv')
-        // return map.call(childObs, tracer.traceMap(sid, 'recv'))
+      } else {
+        flatting = false
       }
     }
 
-    let flatting = name.indexOf('flatMap') === 0
+    let interm
 
-    let obs = mapit(withHandler,
-      fn.apply(
+    if (multSources.indexOf(name) !== -1 && !flatting) {
+      interm = fn.apply(
+        maptrace(withHandler, this, sid),
+        args
+      )
+    } else {
+      interm = fn.apply(
         flatting ? this : mapit(withHandler, this, sid, 'recv'),
         args
-      ),
+      )
+    }
+
+    let obs = mapit(
+      withHandler,
+      interm,
       sid,
       'send'
     )
 
-    /*
-    let obs = map.call(
-      fn.apply(
-        name.indexOf('flatMap') === 0 ? this : map.call(this, tracer.traceMap(sid, 'recv', this)),
-        args),
-      tracer.traceMap(sid, 'send', this)
-    )
-    */
     obs.__rxvision_id = sid
     if (streambag) streambag.add(obs)
     decoractive(obs)
@@ -243,6 +271,28 @@ export default function wrap(Kefir, tracer, streambag) {
     return em
   })
 
+  let multiCreate = ['and', 'or', 'zip', 'merge', 'concat']
+
+  multiCreate.forEach(name => utils.decorate(Kefir, name, fn => function (obs) {
+    let stack = tracer.getStack()
+    if (!stack) return fn.apply(this, arguments)
+    let options = {
+      type: name,
+      title: name,
+      source: null,
+      stack: stack,
+      meta: { },
+    }
+    let sid = tracer.addStream(options)
+
+    let args = [].slice.call(arguments)
+    args[0] = args[0].map(obs => mapit(sWH, obs, sid, 'recv'))
+    // TODO transform args
+    let res = mapit(sWH, fn.apply(this, args), sid, 'send')
+    res.__rxvision_id = sid;
+    return res
+  }))
+
   let emitterLike = ['emitter', 'pool', 'bus']
 
   emitterLike.map(name => utils.decorate(Kefir, name, fn => function (el, evt) {
@@ -256,7 +306,7 @@ export default function wrap(Kefir, tracer, streambag) {
       meta: { },
     }
     let sid = tracer.addStream(options)
-    let em = fn.apply(this, arguments)
+    let em  = fn.apply(this, arguments)
     em.__rxvision_id = sid
     if (streambag) streambag.add(em)
     decoractive(em)
@@ -269,19 +319,19 @@ export default function wrap(Kefir, tracer, streambag) {
   utils.decorate(Kefir.Emitter.prototype, 'error', fn => function (value) {
     if (!this.__rxvision_id) return fn.apply(this, arguments)
     value = tracer.trace(this.__rxvision_id, 'send', this, value)
-    fn.call(this, value)
+    return fn.call(this, value)
   })
 
   utils.decorate(Kefir.Emitter.prototype, 'emit', fn => function (value) {
     if (!this.__rxvision_id) return fn.apply(this, arguments)
     value = tracer.trace(this.__rxvision_id, 'send', this, value)
-    fn.call(this, value)
+    return fn.call(this, value)
   })
 
   utils.decorate(Kefir.Bus.prototype, 'emit', fn => function (value) {
     if (!this.__rxvision_id) return fn.apply(this, arguments)
     value = tracer.trace(this.__rxvision_id, 'send', this, value)
-    fn.call(this, value)
+    return fn.call(this, value)
   })
 
   let pools = [Kefir.Bus.prototype, Kefir.Pool.prototype]
