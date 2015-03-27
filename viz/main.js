@@ -146,7 +146,7 @@ export default class Viz {
 
     labelsE.append('text')
       .attr('x', 0)
-      .attr('y', 0)
+      .attr('y', 4)
       .text(d => d.title + ' [' + d.type + ']')
       .attr('text-anchor', 'end')
       .attr('x', leftBarWidth - margin - crad - cmar)
@@ -154,6 +154,7 @@ export default class Viz {
 
     labels
       .attr('transform', d => `translate(${margin}, ${margin + this.ysid(d.id)})`)
+      .classed('active', d => d.active)
 
     labels.exit().remove()
   }

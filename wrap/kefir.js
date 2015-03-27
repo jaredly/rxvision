@@ -62,6 +62,12 @@ export default function wrap(Kefir, tracer, streambag) {
   }
 
   decorateWH('setName', _ => fn => function (source, name) {
+    if (source === '!no') {
+      if (this.__rxvision_id) {
+        tracer.removeStream(this.__rxvision_id)
+      }
+      return this
+    }
     let res = fn.apply(this, arguments)
     if (this.__rxvision_id && !name) {
       tracer.setStreamName(this.__rxvision_id, source)
@@ -273,7 +279,7 @@ export default function wrap(Kefir, tracer, streambag) {
     return em
   })
 
-  let multiCreate = ['and', 'or', 'zip', 'merge', 'concat', 'combine']
+  let multiCreate = ['and', 'or', 'zip', 'merge', 'concat', 'combine', 'sampledBy']
 
   multiCreate.forEach(name => utils.decorate(Kefir, name, fn => function (obs) {
     let stack = tracer.getStack()
@@ -290,7 +296,7 @@ export default function wrap(Kefir, tracer, streambag) {
     let args = [].slice.call(arguments)
     args[0] = args[0].map(obs => mapit(sWH, obs, sid, 'recv'))
 
-    if (name === 'combine' && Array.isArray(args[1])) {
+    if ((name === 'combine' || name === 'sampledBy') && Array.isArray(args[1])) {
       args[1] = args[1].map(obs => mapit(sWH, obs, sid, 'recv'))
     }
 

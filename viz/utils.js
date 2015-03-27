@@ -95,7 +95,7 @@ function getDataLines(posMap, x, ysid) {
 }
 
 function processData(data) {
-  let streams = Object.keys(data.streams).map(id => data.streams[id])
+  let streams = Object.keys(data.streams).map(id => data.streams[id]).filter(s => s.show !== false)
   let sids = streams.map(s => s.id)
 
   let posMap = getPosMap(streams)

@@ -3,7 +3,6 @@
   position: relative;
   max-width: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .tip {
@@ -60,6 +59,14 @@ circle {
 .swim-lines path.startWith {
   stroke: #f44;
   stroke-width: 1px;
+}
+
+.label.active text {
+  fill: black;
+}
+
+.label text {
+  fill: #aaa;
 }
 
 .data-lines {

@@ -19,6 +19,17 @@ let cases = sources.map(examples => Object.keys(examples).map(name => {
 })).reduce((ful, one) => ful.concat.apply(ful, one), [])
 
 cases.push({
+  title: 'mergeFn',
+  it(Kefir) {
+
+    var a = Kefir.sequentially(100, [0, 1, 2]);
+    var b = Kefir.sequentially(100, [0, 1, 2]).delay(30);
+    var ab = a.merge(b);
+    ab.log();
+  },
+})
+
+cases.push({
   title: 'flatMapFn',
   it(Kefir) {
 
@@ -35,6 +46,17 @@ cases.push({
     var a = Kefir.sequentially(200, [2, 3]).toProperty(1);
     var b = Kefir.interval(100, 0).delay(40).take(5);
     var result = a.sampledBy(b, (a, b) => [a,b]);
+    result.log();
+  },
+})
+
+cases.push({
+  title: 'Kefir.sampledBy',
+  it(Kefir) {
+
+    var a = Kefir.sequentially(200, [2, 3]).toProperty(1);
+    var b = Kefir.interval(100, 0).delay(40).take(5);
+    var result = Kefir.sampledBy([a], [b], (a, b) => [a,b]);
     result.log();
   },
 })
