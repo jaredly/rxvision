@@ -1,3 +1,11 @@
+**Maintenance status:** low. I'm not currently using this or RxJS, but I'm happy to review & merge pull requests if you want to make improvements.
+
+-----
+
+**Completion status:** Prototype. I got something working that worked well for demos, but wasn't really sufficient for large app-sized use cases. It also hasn't been updated to the latest versions of RxJS.
+
+-----
+
 # Take off the blindfold
 
 [![Join the chat at https://gitter.im/jaredly/rxvision](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jaredly/rxvision?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
